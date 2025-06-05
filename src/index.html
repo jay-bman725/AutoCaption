@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoCaption</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Draggable title bar -->
+    <div class="title-bar">
+        <div class="title-bar-content">
+            <span class="app-title">AutoCaption</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>🎬 AutoCaption</h1>
+                <p>Generate professional captions for your videos using OpenAI Whisper</p>
+                <div class="header-badge">
+                    <span>✨ AI-Powered</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- API Key Setup -->
+            <div id="api-key-section" class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🔑 OpenAI API Key</h2>
+                        <p class="card-subtitle">Enter your API key to get started with AI-powered transcription</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="api-key-input" placeholder="sk-..." autocomplete="off">
+                        <button id="set-api-key-btn" class="btn btn-primary">
+                            <span>Set API Key</span>
+                        </button>
+                    </div>
+                    <p class="help-text">
+                        🔗 Get your API key from <a href="https://platform.openai.com/api-keys" id="openai-api-link">OpenAI Platform</a>
+                    </p>
+                    <div id="api-key-status" class="status"></div>
+                    <div id="change-api-key-section" style="display: none;">
+                        <button id="change-api-key-btn" class="btn btn-outline">Change API Key</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Upload -->
+            <div id="upload-section" class="section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📁 Upload Media File</h2>
+                        <p class="card-subtitle">Support for audio and video files (MP3, WAV, MP4, MOV, and more)</p>
+                    </div>
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-content">
+                            <div class="upload-icon">🎵</div>
+                            <h3>Drag and drop your file here</h3>
+                            <p>or</p>
+                            <button id="select-file-btn" class="btn btn-secondary">
+                                <span>📂 Browse Files</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="file-info" class="file-info" style="display: none;">
+                        <div class="file-details">
+                            <div class="file-meta">
+                                <span class="file-icon">📄</span>
+                                <span id="file-name"></span>
+                            </div>
+                            <button id="remove-file-btn" class="btn btn-outline">
+                                <span>🗑️ Remove</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generate Section -->
+            <div id="generate-section" class="section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>⚡ Generate Captions</h2>
+                        <p class="card-subtitle">AI will transcribe your audio and create accurate SRT captions</p>
+                    </div>
+                    <button id="generate-btn" class="btn btn-primary btn-large">
+                        <span id="generate-btn-text">🚀 Generate SRT Captions</span>
+                        <div id="generate-spinner" class="spinner" style="display: none;"></div>
+                    </button>
+                    <div id="generation-status" class="status"></div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results-section" class="section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📝 Generated Captions</h2>
+                        <p class="card-subtitle">Your captions are ready! Preview, copy, or download them below</p>
+                    </div>
+                    <div class="results-actions">
+                        <button id="preview-btn" class="btn btn-secondary">
+                            <span>👁️ Preview</span>
+                        </button>
+                        <button id="copy-btn" class="btn btn-secondary">
+                            <span>📋 Copy to Clipboard</span>
+                        </button>
+                        <button id="download-btn" class="btn btn-primary">
+                            <span>💾 Download SRT</span>
+                        </button>
+                    </div>
+                    <div id="srt-preview" class="srt-preview" style="display: none;">
+                        <pre id="srt-content"></pre>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <p>Made with ❤️ By Jay, using OpenAI Whisper</p>
+                <div class="footer-links">
+                    <span>•</span>
+                    <span>Fast & Accurate</span>
+                    <span>•</span>
+                    <span>Privacy Focused</span>
+                    <span>•</span>
+                    <span>Professional Quality</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

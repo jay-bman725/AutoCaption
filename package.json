@@ -1,0 +1,42 @@
+{
+  "name": "autocaption",
+  "version": "0.9.0",
+  "description": "Automatic caption generation app using OpenAI Whisper",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "dist": "electron-builder --publish=never"
+  },
+  "keywords": ["electron", "captions", "whisper", "openai", "srt"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "openai": "^4.24.0"
+  },
+  "build": {
+    "appId": "com.jaysapps.autocaption",
+    "productName": "AutoCaption",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
