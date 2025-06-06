@@ -10,7 +10,7 @@
     "dist": "electron-builder --publish=never"
   },
   "keywords": ["electron", "captions", "whisper", "openai", "srt"],
-  "author": "Your Name",
+  "author": "Jay Berryman <jay@jaysapps.com>",
   "license": "MIT",
   "devDependencies": {
     "electron": "^28.0.0",
