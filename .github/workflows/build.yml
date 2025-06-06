@@ -72,7 +72,7 @@ jobs:
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
+          name: windows-build-${{ matrix.arch }}
           path: dist/*.exe
 
   build-macos:
@@ -130,19 +130,21 @@ jobs:
           done
 
           # Windows
-          for f in combined-artifacts/windows-build/*; do
-            base="$(basename "$f")"
-            arch="x64"
-            [[ "$base" == *arm64* ]] && arch="arm64"
-            cp "$f" "renamed/windows-AutoCaption-${VERSION}-${arch}.exe"
+          for f in combined-artifacts/windows-build-x64/*; do
+            cp "$f" "renamed/windows-AutoCaption-${VERSION}-x64.exe"
+          done
+
+          for f in combined-artifacts/windows-build-arm64/*; do
+            cp "$f" "renamed/windows-AutoCaption-${VERSION}-arm64.exe"
           done
 
           # macOS
-          for f in combined-artifacts/macos-build/*; do
-            base="$(basename "$f")"
-            arch="x64"
-            [[ "$base" == *arm64* ]] && arch="arm64"
-            cp "$f" "renamed/macos-AutoCaption-${VERSION}-${arch}.dmg"
+          for f in combined-artifacts/macos-build/*x64.dmg; do
+            cp "$f" "renamed/macos-AutoCaption-${VERSION}-x64.dmg"
+          done
+
+          for f in combined-artifacts/macos-build/*arm64.dmg; do
+            cp "$f" "renamed/macos-AutoCaption-${VERSION}-arm64.dmg"
           done
 
       - name: Create GitHub Release
