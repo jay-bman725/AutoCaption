@@ -41,7 +41,7 @@ jobs:
       - name: Rename Linux installers
         run: |
           VERSION=${{ needs.read-version.outputs.version }}
-          for f in dist/*; do
+          for f in dist/*.AppImage dist/*.deb; do
             ext="${f##*.}"
             mv "$f" "dist/linux-AutoCaption-v${VERSION}.${ext}"
           done
@@ -80,16 +80,17 @@ jobs:
         run: |
           VERSION=${{ needs.read-version.outputs.version }}
           ARCH=${{ matrix.arch }}
-          FILENAME="windows-AutoCaption-v${VERSION}"
+          FILE=$(ls dist/*.exe | head -n 1)
+          NAME="windows-AutoCaption-v${VERSION}"
           if [ "$ARCH" = "arm64" ]; then
-            FILENAME="${FILENAME}-arm64"
+            NAME="${NAME}-arm64"
           fi
-          mv dist/*.exe "dist/${FILENAME}.exe"
+          mv "$FILE" "dist/${NAME}.exe"
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
+          name: windows-build-${{ matrix.arch }}
           path: dist/windows-AutoCaption-v*.exe
 
   build-macos:
@@ -115,7 +116,8 @@ jobs:
       - name: Rename x64 .dmg
         run: |
           VERSION=${{ needs.read-version.outputs.version }}
-          mv dist/*.dmg "dist/macos-AutoCaption-v${VERSION}-x64.dmg"
+          FILE=$(ls dist/*.dmg | grep -v arm64 | head -n 1)
+          mv "$FILE" "dist/macos-AutoCaption-v${VERSION}-x64.dmg"
 
       - name: Build macOS arm64
         run: npx electron-builder --mac --arm64
@@ -125,7 +127,8 @@ jobs:
       - name: Rename arm64 .dmg
         run: |
           VERSION=${{ needs.read-version.outputs.version }}
-          mv dist/*.dmg "dist/macos-AutoCaption-v${VERSION}-arm64.dmg"
+          FILE=$(ls dist/*.dmg | head -n 1)
+          mv "$FILE" "dist/macos-AutoCaption-v${VERSION}-arm64.dmg"
 
       - name: Upload macOS installers
         uses: actions/upload-artifact@v4
@@ -153,6 +156,7 @@ jobs:
           files: |
             combined-artifacts/linux-build/linux-AutoCaption-v*.deb
             combined-artifacts/linux-build/linux-AutoCaption-v*.AppImage
-            combined-artifacts/windows-build/windows-AutoCaption-v*.exe
+            combined-artifacts/windows-build-x64/windows-AutoCaption-v*.exe
+            combined-artifacts/windows-build-arm64/windows-AutoCaption-v*.exe
             combined-artifacts/macos-build/macos-AutoCaption-v*.dmg
           token: ${{ secrets.GH_PAT }}
