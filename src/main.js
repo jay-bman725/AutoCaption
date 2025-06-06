@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
@@ -107,7 +107,7 @@ let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.1.3';
+const CURRENT_VERSION = '1.2.0';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
@@ -119,7 +119,8 @@ const settingsFile = path.join(configDir, 'settings.json');
 // Default settings
 const defaultSettings = {
   autoCheckUpdates: true,
-  lastUpdateCheck: null
+  lastUpdateCheck: null,
+  theme: 'system'
 };
 
 // Ensure config directory exists
@@ -630,6 +631,27 @@ ipcMain.handle('open-debug-logs', async () => {
   } catch (error) {
     logger.error('Error opening debug logs:', error);
     return { success: false, error: error.message };
+  }
+});
+
+// Theme management
+ipcMain.handle('get-system-theme', async () => {
+  try {
+    return {
+      success: true,
+      theme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
+    };
+  } catch (error) {
+    logger.error('Error getting system theme:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Listen for system theme changes
+nativeTheme.on('updated', () => {
+  if (mainWindow) {
+    const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+    mainWindow.webContents.send('system-theme-changed', { theme });
   }
 });
 

@@ -4,9 +4,11 @@ class AutoCaptionApp {
         this.currentSrt = null;
         this.apiKeySet = false;
         this.settings = null;
+        this.currentTheme = 'system';
         
         this.initializeEventListeners();
         this.setupApiKeyLoadListener();
+        this.setupThemeSystem();
         this.loadSettings();
     }
 
@@ -45,6 +47,64 @@ class AutoCaptionApp {
         }
     }
 
+    setupThemeSystem() {
+        // Listen for system theme changes
+        if (window.electronAPI && window.electronAPI.onSystemThemeChanged) {
+            window.electronAPI.onSystemThemeChanged((event, data) => {
+                console.log('[DEBUG] System theme changed to:', data.theme);
+                if (this.currentTheme === 'system') {
+                    this.applyTheme(data.theme);
+                }
+            });
+        }
+
+        // Detect initial system theme
+        this.detectAndApplyInitialTheme();
+    }
+
+    async detectAndApplyInitialTheme() {
+        try {
+            const result = await window.electronAPI.getSystemTheme();
+            if (result.success) {
+                console.log('[DEBUG] System theme detected:', result.theme);
+                // Apply system theme initially
+                this.applyTheme(result.theme);
+            }
+        } catch (error) {
+            console.error('Error detecting system theme:', error);
+            // Fallback to light theme
+            this.applyTheme('light');
+        }
+    }
+
+    applyTheme(theme) {
+        const body = document.body;
+        
+        console.log('[DEBUG] Applying theme:', theme);
+        
+        if (theme === 'dark') {
+            body.setAttribute('data-theme', 'dark');
+        } else {
+            body.removeAttribute('data-theme');
+        }
+        
+        // Store current applied theme for reference
+        this.appliedTheme = theme;
+    }
+
+    setTheme(themeChoice) {
+        console.log('[DEBUG] Setting theme choice:', themeChoice);
+        this.currentTheme = themeChoice;
+        
+        if (themeChoice === 'system') {
+            // Apply current system theme
+            this.detectAndApplyInitialTheme();
+        } else {
+            // Apply chosen theme directly
+            this.applyTheme(themeChoice);
+        }
+    }
+
     initializeEventListeners() {
         // API Key setup
         document.getElementById('set-api-key-btn').addEventListener('click', () => this.setApiKey());
@@ -66,6 +126,11 @@ class AutoCaptionApp {
         document.getElementById('cancel-settings-btn').addEventListener('click', () => this.closeSettings());
         document.getElementById('manual-check-updates-btn').addEventListener('click', () => this.checkForUpdates());
         document.getElementById('show-debug-logs-btn').addEventListener('click', () => this.openDebugLogs());
+
+        // Theme selection
+        document.getElementById('theme-select').addEventListener('change', (e) => {
+            this.setTheme(e.target.value);
+        });
 
         // Modal backdrop click to close
         document.getElementById('settings-modal').addEventListener('click', (e) => {
@@ -348,6 +413,11 @@ class AutoCaptionApp {
         const autoCheckUpdates = document.getElementById('auto-check-updates');
         autoCheckUpdates.checked = this.settings?.autoCheckUpdates !== false;
         
+        // Populate theme setting
+        const themeSelect = document.getElementById('theme-select');
+        themeSelect.value = this.settings?.theme || 'system';
+        this.currentTheme = this.settings?.theme || 'system';
+        
         // Update last check info
         this.updateLastCheckInfo();
     }
@@ -359,15 +429,22 @@ class AutoCaptionApp {
 
     async saveSettings() {
         const autoCheckUpdates = document.getElementById('auto-check-updates').checked;
+        const themeSelect = document.getElementById('theme-select');
+        const selectedTheme = themeSelect.value;
+        
+        console.log('[DEBUG] Saving theme setting:', selectedTheme);
         
         const newSettings = {
-            autoCheckUpdates: autoCheckUpdates
+            autoCheckUpdates: autoCheckUpdates,
+            theme: selectedTheme
         };
 
         try {
             const result = await window.electronAPI.saveSettings(newSettings);
             if (result.success) {
                 this.settings = result.settings;
+                console.log('[DEBUG] Theme setting saved successfully:', selectedTheme);
+                this.setTheme(selectedTheme);
                 this.closeSettings();
             } else {
                 console.error('Failed to save settings:', result.error);
@@ -468,13 +545,22 @@ class AutoCaptionApp {
             const result = await window.electronAPI.getSettings();
             if (result.success) {
                 this.settings = result.settings;
+                
+                // Apply saved theme
+                const savedTheme = this.settings.theme || 'system';
+                console.log('[DEBUG] Theme loaded from settings:', savedTheme);
+                this.setTheme(savedTheme);
             } else {
                 console.error('Failed to load settings:', result.error);
-                this.settings = { autoCheckUpdates: true };
+                this.settings = { autoCheckUpdates: true, theme: 'system' };
+                console.log('[DEBUG] Theme defaulted to: system (failed to load settings)');
+                this.setTheme('system');
             }
         } catch (error) {
             console.error('Error loading settings:', error);
-            this.settings = { autoCheckUpdates: true };
+            this.settings = { autoCheckUpdates: true, theme: 'system' };
+            console.log('[DEBUG] Theme defaulted to: system (error loading settings)');
+            this.setTheme('system');
         }
     }
 

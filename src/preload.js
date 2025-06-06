@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
   
+  // Theme management
+  getSystemTheme: () => ipcRenderer.invoke('get-system-theme'),
+  
   // Update checking
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   
@@ -24,5 +27,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTranscriptionStatus: (callback) => ipcRenderer.on('transcription-status', callback),
   
   // Listen for update dialog
-  onShowUpdateDialog: (callback) => ipcRenderer.on('show-update-dialog', callback)
+  onShowUpdateDialog: (callback) => ipcRenderer.on('show-update-dialog', callback),
+  
+  // Listen for system theme changes
+  onSystemThemeChanged: (callback) => ipcRenderer.on('system-theme-changed', callback)
 });

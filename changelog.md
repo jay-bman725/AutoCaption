@@ -1,6 +1,35 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.2.0] - 2025-01-29
+
+### Added
+- **Dark Mode Support**: Complete dark mode implementation with automatic system theme detection
+- **Theme Selection**: User-configurable theme settings with three options:
+  - System Default (automatically follows OS theme)
+  - Light Mode (forced light theme)
+  - Dark Mode (forced dark theme)
+- **CSS Variables System**: Comprehensive CSS custom properties system with 60+ variables for seamless theme switching
+- **Smooth Transitions**: 0.3s ease transitions for all theme changes across the entire UI
+- **Theme Persistence**: User theme preferences are saved and restored across app sessions
+- **System Theme Monitoring**: Real-time detection and application of OS theme changes
+- **Debug Logging**: Comprehensive theme detection and application logging for troubleshooting
+
+### Enhanced
+- **Settings Panel**: Added theme selection dropdown to the settings modal
+- **Color System**: Converted all hardcoded color values to CSS variables for dynamic theming
+- **IPC Communication**: Enhanced inter-process communication for theme management between main and renderer processes
+- **User Experience**: Improved visual consistency across light and dark themes
+- **Accessibility**: Better contrast ratios and readability in both light and dark modes
+
+### Technical
+- Integrated Electron's `nativeTheme` API for system theme detection
+- Added theme-related IPC handlers in main process
+- Implemented `setupThemeSystem()` for theme initialization
+- Added `detectAndApplyInitialTheme()` for startup theme detection
+- Created `applyTheme()` and `setTheme()` methods for theme management
+- Enhanced preload script with theme-related IPC methods
+
 ## [1.1.3] - 2025-06-06
 
 ### Added
