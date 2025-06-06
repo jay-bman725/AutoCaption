@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Update checking
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   
+  // Debug logs
+  openDebugLogs: () => ipcRenderer.invoke('open-debug-logs'),
+  
   // Listen for API key loaded event
   onApiKeyLoaded: (callback) => ipcRenderer.on('api-key-loaded', callback),
   

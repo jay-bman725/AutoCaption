@@ -1,6 +1,26 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.1.3] - 2025-06-06
+
+### Added
+- **Debug Logging System**: Comprehensive debug logging infrastructure for troubleshooting
+- Debug log file creation with automatic rotation (5MB max size, 5 file rotation)
+- Debug logs stored in application data directory (`userData/logs/debug.log`)
+- "Show Debug Logs" button in Settings panel for easy access to log files
+- Debug logging throughout main application processes including:
+  - Application startup and window creation
+  - API key operations and validation
+  - File selection and transcription workflows
+  - Audio processing and FFmpeg operations
+  - Settings management
+  - Update checking functionality
+
+### Enhanced
+- Improved troubleshooting capabilities for users and developers
+- Better error tracking and application state monitoring
+- Enhanced support workflow with detailed logging information
+
 ## [1.1.2] - 2025-06-06
 
 ### Changed

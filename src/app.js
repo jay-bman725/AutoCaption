@@ -65,6 +65,7 @@ class AutoCaptionApp {
         document.getElementById('save-settings-btn').addEventListener('click', () => this.saveSettings());
         document.getElementById('cancel-settings-btn').addEventListener('click', () => this.closeSettings());
         document.getElementById('manual-check-updates-btn').addEventListener('click', () => this.checkForUpdates());
+        document.getElementById('show-debug-logs-btn').addEventListener('click', () => this.openDebugLogs());
 
         // Modal backdrop click to close
         document.getElementById('settings-modal').addEventListener('click', (e) => {
@@ -394,6 +395,42 @@ class AutoCaptionApp {
             // Restore button state
             button.innerHTML = originalText;
             button.disabled = false;
+        }
+    }
+
+    async openDebugLogs() {
+        const button = document.getElementById('show-debug-logs-btn');
+        const originalText = button.innerHTML;
+        
+        // Show loading state
+        button.innerHTML = '<span>📄 Opening...</span>';
+        button.disabled = true;
+        
+        try {
+            const result = await window.electronAPI.openDebugLogs();
+            if (!result.success) {
+                console.error('Failed to open debug logs:', result.error);
+                // Show temporary error message
+                button.innerHTML = '<span>❌ Error</span>';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 2000);
+            } else {
+                // Show success message briefly
+                button.innerHTML = '<span>✅ Opened</span>';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 1500);
+            }
+        } catch (error) {
+            console.error('Error opening debug logs:', error);
+            button.innerHTML = '<span>❌ Error</span>';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
         }
     }
 

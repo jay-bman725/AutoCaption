@@ -6,6 +6,69 @@ const OpenAI = require('openai');
 const https = require('https');
 const ffmpeg = require('fluent-ffmpeg');
 
+// Debug logging setup
+const debugLogsDir = path.join(app.getPath('userData'), 'logs');
+const debugLogFile = path.join(debugLogsDir, 'debug.log');
+const maxLogSize = 5 * 1024 * 1024; // 5MB
+const maxLogFiles = 5;
+
+// Ensure logs directory exists
+async function ensureLogsDir() {
+  try {
+    await fsPromises.mkdir(debugLogsDir, { recursive: true });
+  } catch (error) {
+    console.error('Error creating logs directory:', error);
+  }
+}
+
+// Rotate log files if they get too large
+async function rotateLogFiles() {
+  try {
+    const stats = await fsPromises.stat(debugLogFile);
+    if (stats.size > maxLogSize) {
+      // Rotate existing files
+      for (let i = maxLogFiles - 1; i >= 1; i--) {
+        const oldFile = `${debugLogFile}.${i}`;
+        const newFile = `${debugLogFile}.${i + 1}`;
+        try {
+          await fsPromises.rename(oldFile, newFile);
+        } catch (error) {
+          // File might not exist, ignore
+        }
+      }
+      // Move current log to .1
+      await fsPromises.rename(debugLogFile, `${debugLogFile}.1`);
+    }
+  } catch (error) {
+    // Log file might not exist, ignore
+  }
+}
+
+// Debug logging function
+async function debugLog(level, message, ...args) {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message} ${args.length > 0 ? JSON.stringify(args) : ''}\n`;
+  
+  // Also log to console
+  console.log(`[DEBUG] ${message}`, ...args);
+  
+  try {
+    await ensureLogsDir();
+    await rotateLogFiles();
+    await fsPromises.appendFile(debugLogFile, logEntry, 'utf8');
+  } catch (error) {
+    console.error('Error writing to debug log:', error);
+  }
+}
+
+// Convenience logging functions
+const logger = {
+  info: (message, ...args) => debugLog('info', message, ...args),
+  error: (message, ...args) => debugLog('error', message, ...args),
+  warn: (message, ...args) => debugLog('warn', message, ...args),
+  debug: (message, ...args) => debugLog('debug', message, ...args)
+};
+
 // Set FFmpeg path based on platform
 function setFFmpegPath() {
   const platform = process.platform;
@@ -44,7 +107,7 @@ let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.1.2';
+const CURRENT_VERSION = '1.1.3';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
@@ -71,11 +134,14 @@ async function ensureConfigDir() {
 // Save API key to file
 async function saveApiKey(apiKey) {
   try {
+    logger.info('Attempting to save API key');
     await ensureConfigDir();
     const config = { apiKey };
     await fsPromises.writeFile(apiKeyFile, JSON.stringify(config, null, 2), 'utf8');
+    logger.info('API key saved successfully');
     return true;
   } catch (error) {
+    logger.error('Error saving API key:', error);
     console.error('Error saving API key:', error);
     return false;
   }
@@ -84,10 +150,13 @@ async function saveApiKey(apiKey) {
 // Load API key from file
 async function loadApiKey() {
   try {
+    logger.debug('Loading API key from file');
     const data = await fsPromises.readFile(apiKeyFile, 'utf8');
     const config = JSON.parse(data);
+    logger.info('API key loaded successfully');
     return config.apiKey;
   } catch (error) {
+    logger.debug('API key file not found or invalid, returning null');
     // File doesn't exist or is invalid, return null
     return null;
   }
@@ -95,6 +164,7 @@ async function loadApiKey() {
 
 // Initialize OpenAI with API key
 function initializeOpenAI(apiKey) {
+  logger.info('Initializing OpenAI client');
   openai = new OpenAI({
     apiKey: apiKey
   });
@@ -103,6 +173,7 @@ function initializeOpenAI(apiKey) {
 // Convert video to audio or compress large audio files using FFmpeg
 async function convertToCompressedAudio(inputPath) {
   return new Promise((resolve, reject) => {
+    logger.debug('Starting FFmpeg conversion/compression for:', inputPath);
     const tempDir = path.join(app.getPath('temp'), 'autocaption');
     const outputPath = path.join(tempDir, `processed_${Date.now()}.mp3`);
     
@@ -112,6 +183,8 @@ async function convertToCompressedAudio(inputPath) {
     const fileExtension = path.extname(inputPath).toLowerCase().substring(1);
     const isVideo = ['mp4', 'avi', 'mov', 'mkv', 'flv', 'webm'].includes(fileExtension);
     const originalSizeMB = getFileSizeMB(inputPath);
+    
+    logger.info(`Converting ${isVideo ? 'video' : 'audio'} file: ${originalSizeMB.toFixed(2)}MB`);
     
     // Send progress update
     if (mainWindow) {
@@ -190,23 +263,30 @@ function getFileSizeMB(filePath) {
 // Process audio file (check size first, compress only if needed)
 async function processAudioFile(filePath) {
   try {
+    logger.info('Processing audio file:', filePath);
     const originalSizeMB = getFileSizeMB(filePath);
     const isVideo = isVideoFile(filePath);
+    
+    logger.debug(`File info: size=${originalSizeMB.toFixed(2)}MB, isVideo=${isVideo}`);
     
     // If it's a video file, always convert to MP3
     // If it's an audio file and under 25MB, use original
     // If it's over 25MB, compress it
     if (isVideo || originalSizeMB > 25) {
+      logger.info(`File needs processing (size: ${originalSizeMB.toFixed(2)}MB, isVideo: ${isVideo})`);
       const processedPath = await convertToCompressedAudio(filePath);
       
       // Check file size after processing
       const fileSizeMB = getFileSizeMB(processedPath);
+      logger.debug(`Processed file size: ${fileSizeMB.toFixed(2)}MB`);
       
       if (fileSizeMB > 25) {
+        logger.error(`Processed file still too large: ${fileSizeMB.toFixed(2)}MB`);
         // Clean up processed file
         try {
           fs.unlinkSync(processedPath);
         } catch (error) {
+          logger.warn('Error cleaning up processed file:', error);
           console.error('Error cleaning up processed file:', error);
         }
         
@@ -218,6 +298,7 @@ async function processAudioFile(filePath) {
         };
       }
       
+      logger.info(`File processed successfully: ${fileSizeMB.toFixed(2)}MB`);
       return {
         success: true,
         processedPath,
@@ -226,6 +307,7 @@ async function processAudioFile(filePath) {
       };
     } else {
       // Audio file under 25MB - use original
+      logger.info(`Using original file (${originalSizeMB.toFixed(2)}MB, under 25MB limit)`);
       if (mainWindow) {
         mainWindow.webContents.send('transcription-status', {
           message: `✅ Audio file is ${originalSizeMB.toFixed(2)} MB (under 25MB limit). Using original file.`
@@ -240,6 +322,7 @@ async function processAudioFile(filePath) {
       };
     }
   } catch (error) {
+    logger.error('Error processing audio file:', error);
     return {
       success: false,
       error: `Error processing file: ${error.message}`,
@@ -272,6 +355,7 @@ async function cleanupTempFiles() {
 }
 
 async function createWindow() {
+  logger.info('Creating main window');
   // Set up FFmpeg path
   setFFmpegPath();
   
@@ -290,9 +374,11 @@ async function createWindow() {
     show: false
   });
 
+  logger.debug('Loading main HTML file');
   mainWindow.loadFile('src/index.html');
 
   mainWindow.once('ready-to-show', async () => {
+    logger.info('Main window ready to show');
     // Try to load saved API key
     const savedApiKey = await loadApiKey();
     if (savedApiKey) {
@@ -300,36 +386,48 @@ async function createWindow() {
         initializeOpenAI(savedApiKey);
         // Test the API key
         await openai.models.list();
+        logger.info('Saved API key is valid');
         // Send the saved API key status to renderer
         mainWindow.webContents.send('api-key-loaded', { success: true });
       } catch (error) {
+        logger.warn('Saved API key is invalid:', error);
         console.error('Saved API key is invalid:', error);
         // Send failure status to renderer
         mainWindow.webContents.send('api-key-loaded', { success: false });
       }
+    } else {
+      logger.debug('No saved API key found');
     }
     
     // Start automatic update checking
     await startAutoUpdateCheck();
     
+    logger.info('Showing main window');
     mainWindow.show();
   });
 
   if (process.argv.includes('--dev')) {
+    logger.debug('Development mode detected, opening DevTools');
     mainWindow.webContents.openDevTools();
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+  logger.info('AutoCaption application starting up', { version: CURRENT_VERSION });
+  await createWindow();
+});
 
 app.on('window-all-closed', () => {
+  logger.info('All windows closed');
   stopAutoUpdateCheck();
   if (process.platform !== 'darwin') {
+    logger.info('Quitting application');
     app.quit();
   }
 });
 
 app.on('activate', () => {
+  logger.debug('Application activated');
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
@@ -348,23 +446,29 @@ ipcMain.handle('open-external-url', async (event, url) => {
 
 ipcMain.handle('set-api-key', async (event, apiKey) => {
   try {
+    logger.info('Setting API key');
     // Save the API key to file
     const saved = await saveApiKey(apiKey);
     if (!saved) {
+      logger.error('Failed to save API key to file');
       return { success: false, error: 'Failed to save API key' };
     }
 
     initializeOpenAI(apiKey);
     
     // Test the API key
+    logger.debug('Testing API key by listing models');
     await openai.models.list();
+    logger.info('API key validation successful');
     return { success: true };
   } catch (error) {
+    logger.error('API key validation failed:', error);
     return { success: false, error: error.message };
   }
 });
 
 ipcMain.handle('select-audio-file', async () => {
+  logger.info('Opening file selection dialog');
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
     filters: [
@@ -377,25 +481,31 @@ ipcMain.handle('select-audio-file', async () => {
   });
 
   if (!result.canceled && result.filePaths.length > 0) {
+    logger.info('File selected:', result.filePaths[0]);
     return { success: true, filePath: result.filePaths[0] };
   }
+  logger.debug('File selection canceled');
   return { success: false };
 });
 
 ipcMain.handle('transcribe-audio', async (event, filePath) => {
   if (!openai) {
+    logger.error('Transcription attempted without API key set');
     return { success: false, error: 'API key not set' };
   }
 
   try {
+    logger.info('Starting transcription for file:', filePath);
     // Process the audio file (always compress, then check size)
     const processResult = await processAudioFile(filePath);
     
     if (!processResult.success) {
+      logger.error('Audio file processing failed:', processResult.error);
       return processResult;
     }
     
     const { processedPath, wasCompressed, fileSizeMB } = processResult;
+    logger.info(`Audio processing complete. Size: ${fileSizeMB}MB, Compressed: ${wasCompressed}`);
     
     // Send status update about file processing
     if (mainWindow) {
@@ -404,26 +514,33 @@ ipcMain.handle('transcribe-audio', async (event, filePath) => {
       });
     }
 
+    logger.debug('Sending file to OpenAI Whisper for transcription');
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream(processedPath),
       model: 'whisper-1',
       response_format: 'srt'
     });
 
+    logger.info('Transcription completed successfully');
+
     // Clean up compressed file
     try {
       fs.unlinkSync(processedPath);
+      logger.debug('Cleaned up temporary processed file');
     } catch (error) {
+      logger.warn('Error cleaning up compressed file:', error);
       console.error('Error cleaning up compressed file:', error);
     }
 
     return { success: true, srt: transcription };
   } catch (error) {
+    logger.error('Transcription failed:', error);
     return { success: false, error: error.message };
   }
 });
 
 ipcMain.handle('save-srt-file', async (event, srtContent) => {
+  logger.info('Saving SRT file');
   const result = await dialog.showSaveDialog(mainWindow, {
     defaultPath: 'captions.srt',
     filters: [
@@ -435,11 +552,14 @@ ipcMain.handle('save-srt-file', async (event, srtContent) => {
   if (!result.canceled) {
     try {
       await fsPromises.writeFile(result.filePath, srtContent, 'utf8');
+      logger.info('SRT file saved successfully:', result.filePath);
       return { success: true, filePath: result.filePath };
     } catch (error) {
+      logger.error('Error saving SRT file:', error);
       return { success: false, error: error.message };
     }
   }
+  logger.debug('SRT file save canceled');
   return { success: false };
 });
 
@@ -488,6 +608,27 @@ ipcMain.handle('check-for-updates', async () => {
     }
     return result;
   } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Open debug logs
+ipcMain.handle('open-debug-logs', async () => {
+  try {
+    logger.info('Opening debug logs file');
+    await ensureLogsDir();
+    
+    // Check if debug log file exists
+    if (!fs.existsSync(debugLogFile)) {
+      logger.warn('Debug log file does not exist, creating it');
+      await fsPromises.writeFile(debugLogFile, '# AutoCaption Debug Logs\n\n', 'utf8');
+    }
+    
+    // Open the debug log file with the system's default text editor
+    await shell.openPath(debugLogFile);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error opening debug logs:', error);
     return { success: false, error: error.message };
   }
 });
