@@ -6,64 +6,97 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
+  read-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.VERSION }}
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Read version from file
+        id: get-version
+        run: echo "VERSION=$(cat version)" >> $GITHUB_OUTPUT
+
+  build-linux:
+    needs: read-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Read version
-        id: version
-        run: echo "VERSION=$(cat version)" >> $GITHUB_OUTPUT
+      - name: Build for Linux
+        run: npx electron-builder --linux
 
-      - name: Build Electron app
-        run: |
-          npx electron-builder --${
-            matrix.os == 'ubuntu-latest' && 'linux' ||
-            matrix.os == 'macos-latest' && 'mac' ||
-            matrix.os == 'windows-latest' && 'win'
-          }
-
-      - name: Upload build artifact
+      - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.os }}
+          name: linux-build
+          path: dist/
+          if-no-files-found: ignore
+
+  build-windows:
+    needs: read-version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for Windows
+        run: npx electron-builder --win
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: dist/
+          if-no-files-found: ignore
+
+  build-macos:
+    needs: read-version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for macOS
+        run: npx electron-builder --mac
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
           path: dist/
           if-no-files-found: ignore
 
   release:
-    needs: build
+    needs: [build-linux, build-windows, build-macos, read-version]
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Read version
-        id: version
-        run: echo "VERSION=$(cat version)" >> $GITHUB_OUTPUT
-
-      - name: Download all build artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: combined-artifacts
 
-      - name: Create GitHub Release using PAT
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.VERSION }}
-          name: v${{ steps.version.outputs.VERSION }}
-          files: artifacts/**/*  # include all platform builds
+          tag_name: v${{ needs.read-version.outputs.version }}
+          name: v${{ needs.read-version.outputs.version }}
+          files: combined-artifacts/**/*  # includes builds from all platforms
           token: ${{ secrets.GH_PAT }}
