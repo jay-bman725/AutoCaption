@@ -38,17 +38,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
+      - name: Rename Linux installers
+        run: |
+          VERSION=${{ needs.read-version.outputs.version }}
+          for f in dist/*; do
+            ext="${f##*.}"
+            mv "$f" "dist/linux-AutoCaption-v${VERSION}.${ext}"
+          done
+
       - name: Upload Linux installers
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
-          path: |
-            dist/*.deb
-            dist/*.AppImage
+          path: dist/linux-AutoCaption-v*.{deb,AppImage}
 
   build-windows:
     needs: read-version
     runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,16 +70,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build for Windows
-        run: npx electron-builder --win
+      - name: Build for Windows ${{ matrix.arch }}
+        run: npx electron-builder --win --${{ matrix.arch }}
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
+
+      - name: Rename Windows installer
+        shell: bash
+        run: |
+          VERSION=${{ needs.read-version.outputs.version }}
+          ARCH=${{ matrix.arch }}
+          FILENAME="windows-AutoCaption-v${VERSION}"
+          if [ "$ARCH" = "arm64" ]; then
+            FILENAME="${FILENAME}-arm64"
+          fi
+          mv dist/*.exe "dist/${FILENAME}.exe"
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: dist/*.exe
+          path: dist/windows-AutoCaption-v*.exe
 
   build-macos:
     needs: read-version
@@ -94,8 +114,8 @@ jobs:
 
       - name: Rename x64 .dmg
         run: |
-          FILE=$(ls dist/*.dmg | head -n 1)
-          mv "$FILE" "dist/AutoCaption-x64.dmg"
+          VERSION=${{ needs.read-version.outputs.version }}
+          mv dist/*.dmg "dist/macos-AutoCaption-v${VERSION}-x64.dmg"
 
       - name: Build macOS arm64
         run: npx electron-builder --mac --arm64
@@ -104,14 +124,14 @@ jobs:
 
       - name: Rename arm64 .dmg
         run: |
-          FILE=$(ls dist/*.dmg | head -n 1)
-          mv "$FILE" "dist/AutoCaption-arm64.dmg"
+          VERSION=${{ needs.read-version.outputs.version }}
+          mv dist/*.dmg "dist/macos-AutoCaption-v${VERSION}-arm64.dmg"
 
       - name: Upload macOS installers
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
-          path: dist/*.dmg
+          path: dist/macos-AutoCaption-v*.dmg
 
   release:
     needs: [build-linux, build-windows, build-macos, read-version]
@@ -131,8 +151,8 @@ jobs:
           tag_name: v${{ needs.read-version.outputs.version }}
           name: v${{ needs.read-version.outputs.version }}
           files: |
-            combined-artifacts/linux-build/*.deb
-            combined-artifacts/linux-build/*.AppImage
-            combined-artifacts/windows-build/*.exe
-            combined-artifacts/macos-build/*.dmg
+            combined-artifacts/linux-build/linux-AutoCaption-v*.deb
+            combined-artifacts/linux-build/linux-AutoCaption-v*.AppImage
+            combined-artifacts/windows-build/windows-AutoCaption-v*.exe
+            combined-artifacts/macos-build/macos-AutoCaption-v*.dmg
           token: ${{ secrets.GH_PAT }}
