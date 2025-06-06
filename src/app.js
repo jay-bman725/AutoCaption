@@ -3,9 +3,11 @@ class AutoCaptionApp {
         this.currentFile = null;
         this.currentSrt = null;
         this.apiKeySet = false;
+        this.settings = null;
         
         this.initializeEventListeners();
         this.setupApiKeyLoadListener();
+        this.loadSettings();
     }
 
     setupApiKeyLoadListener() {
@@ -38,6 +40,23 @@ class AutoCaptionApp {
 
         // External links
         document.getElementById('openai-api-link').addEventListener('click', (e) => this.handleExternalLink(e));
+
+        // Settings
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            console.log('Settings button clicked');
+            this.openSettings();
+        });
+        document.getElementById('close-settings-btn').addEventListener('click', () => this.closeSettings());
+        document.getElementById('save-settings-btn').addEventListener('click', () => this.saveSettings());
+        document.getElementById('cancel-settings-btn').addEventListener('click', () => this.closeSettings());
+        document.getElementById('manual-check-updates-btn').addEventListener('click', () => this.checkForUpdates());
+
+        // Modal backdrop click to close
+        document.getElementById('settings-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('settings-modal')) {
+                this.closeSettings();
+            }
+        });
 
         // File upload
         document.getElementById('select-file-btn').addEventListener('click', () => this.selectFile());
@@ -262,10 +281,111 @@ class AutoCaptionApp {
         document.getElementById('api-key-input').focus();
     }
 
+    async openSettings() {
+        console.log('openSettings called');
+        const settingsModal = document.getElementById('settings-modal');
+        console.log('settingsModal:', settingsModal);
+        settingsModal.classList.add('show');
+        
+        // Load current settings
+        await this.loadSettings();
+        
+        // Populate settings fields
+        const autoCheckUpdates = document.getElementById('auto-check-updates');
+        autoCheckUpdates.checked = this.settings?.autoCheckUpdates !== false;
+        
+        // Update last check info
+        this.updateLastCheckInfo();
+    }
+
+    closeSettings() {
+        const settingsModal = document.getElementById('settings-modal');
+        settingsModal.classList.remove('show');
+    }
+
+    async saveSettings() {
+        const autoCheckUpdates = document.getElementById('auto-check-updates').checked;
+        
+        const newSettings = {
+            autoCheckUpdates: autoCheckUpdates
+        };
+
+        try {
+            const result = await window.electronAPI.saveSettings(newSettings);
+            if (result.success) {
+                this.settings = result.settings;
+                this.closeSettings();
+            } else {
+                console.error('Failed to save settings:', result.error);
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+        }
+    }
+
+    async checkForUpdates() {
+        const button = document.getElementById('manual-check-updates-btn');
+        const originalText = button.innerHTML;
+        
+        // Show loading state
+        button.innerHTML = '<span>🔄 Checking...</span>';
+        button.disabled = true;
+        
+        try {
+            const result = await window.electronAPI.checkForUpdates();
+            // The main process handles showing the dialog
+            this.updateLastCheckInfo();
+        } catch (error) {
+            console.error('Error checking for updates:', error);
+        } finally {
+            // Restore button state
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+
+    updateLastCheckInfo() {
+        const lastCheckInfo = document.getElementById('last-check-info');
+        if (this.settings?.lastUpdateCheck) {
+            const lastCheck = new Date(this.settings.lastUpdateCheck);
+            const now = new Date();
+            const timeDiff = now - lastCheck;
+            const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60));
+            
+            if (hoursDiff < 1) {
+                lastCheckInfo.textContent = 'Last checked: Less than an hour ago';
+            } else if (hoursDiff === 1) {
+                lastCheckInfo.textContent = 'Last checked: 1 hour ago';
+            } else if (hoursDiff < 24) {
+                lastCheckInfo.textContent = `Last checked: ${hoursDiff} hours ago`;
+            } else {
+                const daysDiff = Math.floor(hoursDiff / 24);
+                lastCheckInfo.textContent = `Last checked: ${daysDiff} day${daysDiff > 1 ? 's' : ''} ago`;
+            }
+        } else {
+            lastCheckInfo.textContent = 'Never checked for updates';
+        }
+    }
+
     showStatus(element, message, type) {
         element.textContent = message;
         element.className = `status ${type}`;
         element.style.display = 'block';
+    }
+
+    async loadSettings() {
+        try {
+            const result = await window.electronAPI.getSettings();
+            if (result.success) {
+                this.settings = result.settings;
+            } else {
+                console.error('Failed to load settings:', result.error);
+                this.settings = { autoCheckUpdates: true };
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
+            this.settings = { autoCheckUpdates: true };
+        }
     }
 }
 

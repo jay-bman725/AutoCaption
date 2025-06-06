@@ -22,10 +22,56 @@
                 <div class="header-badge">
                     <span>✨ AI-Powered</span>
                 </div>
+                <div class="header-actions">
+                    <button id="settings-btn" class="btn btn-icon" title="Settings">
+                        <span>⚙️</span>
+                    </button>
+                </div>
             </div>
         </header>
 
         <main>
+            <!-- Settings Modal -->
+            <div id="settings-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>⚙️ Settings</h2>
+                        <button id="close-settings-btn" class="btn btn-icon">✖️</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="setting-group">
+                            <h3>🔄 Updates</h3>
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="auto-check-updates" checked>
+                                    <span class="checkmark"></span>
+                                    Automatically check for updates every hour
+                                </label>
+                                <p class="setting-description">When enabled, AutoCaption will check for new versions in the background.</p>
+                            </div>
+                            <div class="setting-item">
+                                <button id="manual-check-updates-btn" class="btn btn-secondary">
+                                    <span>🔍 Check for Updates Now</span>
+                                </button>
+                                <div id="last-check-info" class="setting-info"></div>
+                            </div>
+                        </div>
+                        <div class="setting-group">
+                            <h3>ℹ️ About</h3>
+                            <div class="setting-item">
+                                <p><strong>Version:</strong> 1.0.0</p>
+                                <p><strong>Made with ❤️ by Jay</strong></p>
+                                <p>Using OpenAI Whisper for AI-powered transcription</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
+                        <button id="cancel-settings-btn" class="btn btn-outline">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- API Key Setup -->
             <div id="api-key-section" class="section">
                 <div class="card">
@@ -124,7 +170,6 @@
             <div class="footer-content">
                 <p>Made with ❤️ By Jay, using OpenAI Whisper</p>
                 <div class="footer-links">
-                    <span>•</span>
                     <span>Fast & Accurate</span>
                     <span>•</span>
                     <span>Privacy Focused</span>
