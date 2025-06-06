@@ -5,7 +5,7 @@ Easily transcribe and generate SRT captions from audio or video files — with a
 
 > 💡 If you find this project helpful, please consider giving it a **⭐️** — it really helps support continued development!
 
-**Are you a Mac OS user? Please check [here](github.com/jay-bman725/AutoCaption?tab=readme-ov-file#-macos-users--app-is-damaged-fix) to make the app run after copying to the Applications directory**
+**Are you a Mac OS user? Please check [here](https://github.com/jay-bman725/AutoCaption/tree/main?tab=readme-ov-file#-macos-users--app-is-damaged-fix) to make the app run after copying to the Applications directory**
 
 ---
 
