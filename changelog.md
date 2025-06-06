@@ -1,11 +1,5 @@
 # Changelog
-
-All notable changes to AutoCaption will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-All dates are in YYYY/MM/DD (Year-Month-Day)
+**All dates are in YYYY/MM/DD (Year-Month-Day)**
 
 ## [1.1.1] - 2025-06-06 
 
@@ -58,7 +52,7 @@ All dates are in YYYY/MM/DD (Year-Month-Day)
 
 ---
 
-# Release Notes
+## Notes
 
 ### Version Naming Convention
 - **Major version** (x.0.0): Significant new features or breaking changes
@@ -71,3 +65,8 @@ All dates are in YYYY/MM/DD (Year-Month-Day)
 - Cloud sync for projects
 - Custom vocabulary training
 - Advanced audio enhancement filters
+
+All notable changes to AutoCaption will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
