@@ -11,6 +11,8 @@ Easily transcribe and generate SRT captions from audio or video files — with a
 
 - 🔑 **Plug & Play** — Just enter your OpenAI API key and you're ready to go
 - 🎞 **Wide Format Support** — MP3, WAV, MP4, AVI, MOV, MKV, and more
+- 🗜️ **Smart Processing** — Converts videos to MP3, compresses large audio files only when needed
+- 📏 **Size Optimization** — Automatically handles OpenAI's 25MB limit with intelligent compression
 - 🧠 **Whisper-Powered** — Uses OpenAI Whisper to generate high-quality captions
 - 📝 **Preview & Edit** — View captions before exporting to SRT
 - 📁 **Drag & Drop** — Upload files with ease
@@ -47,7 +49,7 @@ Easily transcribe and generate SRT captions from audio or video files — with a
 
 ### 📦 From GitHub Releases
 
-Prebuilt installers for **Windows, macOS (arm64 + x64), and Linux** are available under the [Releases tab](https://github.com/jay-bman725/AutoCaption/releases/tag/v1.0.0).
+Prebuilt installers for **Windows, macOS (arm64 + x64), and Linux** are available under the [Releases tab](https://github.com/jay-bman725/AutoCaption/releases/).
 Just download, install, and go.
 
 ---
@@ -93,7 +95,26 @@ npm run build
 
 * Node.js 16+
 * An OpenAI API key (with Whisper support)
+* FFmpeg installed on your system (for video conversion)
 * macOS, Windows, or Linux
+
+### Installing FFmpeg
+
+**macOS** (with Homebrew):
+```bash
+brew install ffmpeg
+```
+
+**Windows**:
+Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html) or use chocolatey:
+```bash
+choco install ffmpeg
+```
+
+**Linux** (Ubuntu/Debian):
+```bash
+sudo apt update && sudo apt install ffmpeg
+```
 
 ---
 

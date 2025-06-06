@@ -35,7 +35,7 @@ body::before {
     top: 0;
     left: 0;
     right: 0;
-    height: 44px;
+    height: 32px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -56,7 +56,7 @@ body::before {
 
 .app-title {
     color: #374151;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: -0.025em;
 }
@@ -82,7 +82,7 @@ a,
 .container {
     max-width: 900px;
     margin: 0 auto;
-    padding: 70px 20px 40px; /* Added top padding for title bar */
+    padding: 52px 20px 40px; /* Adjusted top padding for thinner title bar */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -439,6 +439,13 @@ input[type="password"]::placeholder {
     color: #991b1b;
     border-color: #ef4444;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.status.warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border-color: #f59e0b;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
 }
 
 .status.loading {

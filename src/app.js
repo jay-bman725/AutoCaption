@@ -28,6 +28,14 @@ class AutoCaptionApp {
                 }
             });
         }
+        
+        // Listen for transcription status updates
+        if (window.electronAPI && window.electronAPI.onTranscriptionStatus) {
+            window.electronAPI.onTranscriptionStatus((event, status) => {
+                const statusDiv = document.getElementById('generation-status');
+                this.showStatus(statusDiv, status.message, 'loading');
+            });
+        }
     }
 
     initializeEventListeners() {
@@ -130,8 +138,21 @@ class AutoCaptionApp {
     setSelectedFile(filePath) {
         this.currentFile = filePath;
         const fileName = filePath.split('/').pop();
+        const fileExtension = fileName.split('.').pop().toLowerCase();
+        const videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'flv', 'webm'];
+        const audioExtensions = ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'wma'];
+        const isVideo = videoExtensions.includes(fileExtension);
+        const isAudio = audioExtensions.includes(fileExtension);
         
-        document.getElementById('file-name').textContent = fileName;
+        // Show file processing info
+        let fileInfoText = fileName;
+        if (isVideo) {
+            fileInfoText += ' (will be converted to MP3)';
+        } else if (isAudio) {
+            fileInfoText += ' (will check size & compress if needed)';
+        }
+        
+        document.getElementById('file-name').textContent = fileInfoText;
         document.getElementById('file-info').style.display = 'block';
         document.getElementById('generate-section').style.display = 'block';
         
@@ -189,7 +210,7 @@ class AutoCaptionApp {
         btnText.style.display = 'none';
         spinner.style.display = 'block';
 
-        this.showStatus(statusDiv, '🔄 Transcribing audio with OpenAI Whisper...', 'loading');
+        this.showStatus(statusDiv, '🔄 Processing file and preparing for transcription...', 'loading');
 
         try {
             const result = await window.electronAPI.transcribeAudio(this.currentFile);
@@ -200,7 +221,12 @@ class AutoCaptionApp {
                 document.getElementById('results-section').style.display = 'block';
                 document.getElementById('srt-content').textContent = this.currentSrt;
             } else {
-                this.showStatus(statusDiv, `❌ Error: ${result.error}`, 'error');
+                // Check if it's a file size error for special handling
+                if (result.isFileSizeError) {
+                    this.showStatus(statusDiv, `🚫 ${result.error} Please select a shorter audio/video file and try again.`, 'error');
+                } else {
+                    this.showStatus(statusDiv, `❌ Error: ${result.error}`, 'error');
+                }
             }
         } catch (error) {
             this.showStatus(statusDiv, `❌ Error: ${error.message}`, 'error');

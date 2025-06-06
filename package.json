@@ -1,6 +1,6 @@
 {
   "name": "autocaption",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Automatic caption generation app using OpenAI Whisper",
   "main": "src/main.js",
   "scripts": {
@@ -9,7 +9,13 @@
     "build": "electron-builder",
     "dist": "electron-builder --publish=never"
   },
-  "keywords": ["electron", "captions", "whisper", "openai", "srt"],
+  "keywords": [
+    "electron",
+    "captions",
+    "whisper",
+    "openai",
+    "srt"
+  ],
   "author": "Jay Berryman <jay@jaysapps.com>",
   "license": "MIT",
   "devDependencies": {
@@ -17,6 +23,7 @@
     "electron-builder": "^24.9.1"
   },
   "dependencies": {
+    "fluent-ffmpeg": "^2.1.3",
     "openai": "^4.24.0"
   },
   "build": {
@@ -30,13 +37,18 @@
       "node_modules/**/*"
     ],
     "mac": {
-      "target": ["dmg"]
+      "target": [
+        "dmg"
+      ]
     },
     "win": {
       "target": "nsis"
     },
     "linux": {
-      "target": ["deb", "AppImage"]
+      "target": [
+        "deb",
+        "AppImage"
+      ]
     }
   }
 }

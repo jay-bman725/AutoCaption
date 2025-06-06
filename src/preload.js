@@ -15,5 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   
   // Listen for API key loaded event
-  onApiKeyLoaded: (callback) => ipcRenderer.on('api-key-loaded', callback)
+  onApiKeyLoaded: (callback) => ipcRenderer.on('api-key-loaded', callback),
+  
+  // Listen for transcription status updates
+  onTranscriptionStatus: (callback) => ipcRenderer.on('transcription-status', callback)
 });

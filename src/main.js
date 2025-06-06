@@ -4,13 +4,47 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const OpenAI = require('openai');
 const https = require('https');
+const ffmpeg = require('fluent-ffmpeg');
+
+// Set FFmpeg path based on platform
+function setFFmpegPath() {
+  const platform = process.platform;
+  let ffmpegPath;
+  
+  if (platform === 'darwin') {
+    // macOS - try common locations
+    const possiblePaths = [
+      '/opt/homebrew/bin/ffmpeg',
+      '/usr/local/bin/ffmpeg',
+      '/usr/bin/ffmpeg'
+    ];
+    ffmpegPath = possiblePaths.find(p => fs.existsSync(p));
+  } else if (platform === 'win32') {
+    // Windows - check if ffmpeg is in PATH or bundled
+    ffmpegPath = 'ffmpeg'; // Assume it's in PATH
+  } else {
+    // Linux - check common locations
+    const possiblePaths = [
+      '/usr/bin/ffmpeg',
+      '/usr/local/bin/ffmpeg'
+    ];
+    ffmpegPath = possiblePaths.find(p => fs.existsSync(p)) || 'ffmpeg';
+  }
+  
+  if (ffmpegPath && fs.existsSync(ffmpegPath)) {
+    ffmpeg.setFfmpegPath(ffmpegPath);
+    console.log('FFmpeg path set to:', ffmpegPath);
+  } else {
+    console.warn('FFmpeg not found at expected locations. Hoping it\'s in PATH...');
+  }
+}
 
 let mainWindow;
 let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.0.0';
+const CURRENT_VERSION = '1.1.0';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 
 // Path for storing the API key and settings
@@ -65,7 +99,184 @@ function initializeOpenAI(apiKey) {
   });
 }
 
+// Convert video to audio or compress large audio files using FFmpeg
+async function convertToCompressedAudio(inputPath) {
+  return new Promise((resolve, reject) => {
+    const tempDir = path.join(app.getPath('temp'), 'autocaption');
+    const outputPath = path.join(tempDir, `processed_${Date.now()}.mp3`);
+    
+    // Ensure temp directory exists
+    fs.mkdirSync(tempDir, { recursive: true });
+    
+    const fileExtension = path.extname(inputPath).toLowerCase().substring(1);
+    const isVideo = ['mp4', 'avi', 'mov', 'mkv', 'flv', 'webm'].includes(fileExtension);
+    const originalSizeMB = getFileSizeMB(inputPath);
+    
+    // Send progress update
+    if (mainWindow) {
+      let message;
+      if (isVideo) {
+        message = '🔄 Converting video to MP3 audio...';
+      } else {
+        message = `🔄 Compressing large audio file (${originalSizeMB.toFixed(2)} MB)...`;
+      }
+      mainWindow.webContents.send('transcription-status', { message });
+    }
+    
+    let ffmpegCommand = ffmpeg(inputPath)
+      .toFormat('mp3')
+      .audioCodec('libmp3lame');
+    
+    // For large files or videos, apply compression settings
+    if (isVideo || originalSizeMB > 25) {
+      ffmpegCommand = ffmpegCommand
+        .audioBitrate(128) // Compress to 128kbps
+        .audioChannels(1) // Mono to reduce file size
+        .audioFrequency(22050); // Lower sample rate to reduce file size
+    } else {
+      // For smaller audio files that need format conversion, keep higher quality
+      ffmpegCommand = ffmpegCommand
+        .audioBitrate(192) // Higher quality for smaller files
+        .audioChannels(2) // Keep stereo
+        .audioFrequency(44100); // Keep standard sample rate
+    }
+    
+    ffmpegCommand
+      .on('progress', (progress) => {
+        if (mainWindow && progress.percent) {
+          const percent = Math.round(progress.percent);
+          let message;
+          if (isVideo) {
+            message = `🔄 Converting video... ${percent}%`;
+          } else {
+            message = `🔄 Compressing audio... ${percent}%`;
+          }
+          mainWindow.webContents.send('transcription-status', { message });
+        }
+      })
+      .on('end', () => {
+        if (mainWindow) {
+          const action = isVideo ? 'conversion' : 'compression';
+          mainWindow.webContents.send('transcription-status', {
+            message: `✅ Audio ${action} completed. Checking file size...`
+          });
+        }
+        resolve(outputPath);
+      })
+      .on('error', (err) => {
+        console.error('FFmpeg processing error:', err);
+        const action = isVideo ? 'Video conversion' : 'Audio compression';
+        reject(new Error(`${action} failed: ${err.message}`));
+      })
+      .save(outputPath);
+  });
+}
+
+// Check if file is a video format
+function isVideoFile(filePath) {
+  const videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'flv', 'webm'];
+  const extension = path.extname(filePath).toLowerCase().substring(1);
+  return videoExtensions.includes(extension);
+}
+
+// Get file size in MB
+function getFileSizeMB(filePath) {
+  const stats = fs.statSync(filePath);
+  const fileSizeInBytes = stats.size;
+  return fileSizeInBytes / (1024 * 1024);
+}
+
+// Process audio file (check size first, compress only if needed)
+async function processAudioFile(filePath) {
+  try {
+    const originalSizeMB = getFileSizeMB(filePath);
+    const isVideo = isVideoFile(filePath);
+    
+    // If it's a video file, always convert to MP3
+    // If it's an audio file and under 25MB, use original
+    // If it's over 25MB, compress it
+    if (isVideo || originalSizeMB > 25) {
+      const processedPath = await convertToCompressedAudio(filePath);
+      
+      // Check file size after processing
+      const fileSizeMB = getFileSizeMB(processedPath);
+      
+      if (fileSizeMB > 25) {
+        // Clean up processed file
+        try {
+          fs.unlinkSync(processedPath);
+        } catch (error) {
+          console.error('Error cleaning up processed file:', error);
+        }
+        
+        const action = isVideo ? "conversion and compression" : "compression";
+        return {
+          success: false,
+          error: `After ${action}, file size is ${fileSizeMB.toFixed(2)} MB, which exceeds OpenAI's 25MB limit. Please use a shorter audio/video file.`,
+          isFileSizeError: true
+        };
+      }
+      
+      return {
+        success: true,
+        processedPath,
+        wasCompressed: true,
+        fileSizeMB: fileSizeMB.toFixed(2)
+      };
+    } else {
+      // Audio file under 25MB - use original
+      if (mainWindow) {
+        mainWindow.webContents.send('transcription-status', {
+          message: `✅ Audio file is ${originalSizeMB.toFixed(2)} MB (under 25MB limit). Using original file.`
+        });
+      }
+      
+      return {
+        success: true,
+        processedPath: filePath,
+        wasCompressed: false,
+        fileSizeMB: originalSizeMB.toFixed(2)
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: `Error processing file: ${error.message}`,
+      isFileSizeError: false
+    };
+  }
+}
+
+// Clean up old temporary files
+async function cleanupTempFiles() {
+  try {
+    const tempDir = path.join(app.getPath('temp'), 'autocaption');
+    if (fs.existsSync(tempDir)) {
+      const files = await fsPromises.readdir(tempDir);
+      const cutoff = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+      
+      for (const file of files) {
+        const filePath = path.join(tempDir, file);
+        const stats = await fsPromises.stat(filePath);
+        
+        if (stats.mtime.getTime() < cutoff) {
+          await fsPromises.unlink(filePath);
+          console.log('Cleaned up old temp file:', file);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error cleaning up temp files:', error);
+  }
+}
+
 async function createWindow() {
+  // Set up FFmpeg path
+  setFFmpegPath();
+  
+  // Clean up old temporary files
+  await cleanupTempFiles();
+  
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -176,11 +387,34 @@ ipcMain.handle('transcribe-audio', async (event, filePath) => {
   }
 
   try {
+    // Process the audio file (always compress, then check size)
+    const processResult = await processAudioFile(filePath);
+    
+    if (!processResult.success) {
+      return processResult;
+    }
+    
+    const { processedPath, wasCompressed, fileSizeMB } = processResult;
+    
+    // Send status update about file processing
+    if (mainWindow) {
+      mainWindow.webContents.send('transcription-status', {
+        message: `✅ File compressed successfully (${fileSizeMB} MB). Starting transcription...`
+      });
+    }
+
     const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(filePath),
+      file: fs.createReadStream(processedPath),
       model: 'whisper-1',
       response_format: 'srt'
     });
+
+    // Clean up compressed file
+    try {
+      fs.unlinkSync(processedPath);
+    } catch (error) {
+      console.error('Error cleaning up compressed file:', error);
+    }
 
     return { success: true, srt: transcription };
   } catch (error) {
