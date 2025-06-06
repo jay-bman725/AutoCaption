@@ -22,8 +22,11 @@ jobs:
     needs: read-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -32,6 +35,8 @@ jobs:
 
       - name: Build for Linux
         run: npx electron-builder --linux
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
@@ -44,8 +49,11 @@ jobs:
     needs: read-version
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -54,6 +62,8 @@ jobs:
 
       - name: Build for Windows
         run: npx electron-builder --win
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -66,8 +76,11 @@ jobs:
     needs: read-version
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -76,6 +89,8 @@ jobs:
 
       - name: Build for macOS
         run: npx electron-builder --mac
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -88,7 +103,7 @@ jobs:
     needs: [build-linux, build-windows, build-macos, read-version]
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: combined-artifacts
@@ -98,5 +113,5 @@ jobs:
         with:
           tag_name: v${{ needs.read-version.outputs.version }}
           name: v${{ needs.read-version.outputs.version }}
-          files: combined-artifacts/**/*  # includes builds from all platforms
+          files: combined-artifacts/**/*
           token: ${{ secrets.GH_PAT }}
