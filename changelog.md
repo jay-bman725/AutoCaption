@@ -1,6 +1,13 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.1.2] - 2025-06-06
+
+### Changed
+- Enhanced update download functionality to direct users to specific version release pages
+- Update "Download Update" button now navigates to the exact version tag URL (e.g., `/releases/tag/v1.1.2`) instead of the general releases page
+- Improved user experience when downloading updates by eliminating the need to search for the correct version
+
 ## [1.1.1] - 2025-06-06 
 
 ### Added

@@ -518,7 +518,16 @@ class AutoCaptionApp {
 
     async downloadUpdate() {
         try {
-            await window.electronAPI.openExternalUrl('https://github.com/jay-bman725/AutoCaption/releases');
+            // Get the new version number from the modal
+            const newVersionEl = document.getElementById('new-version');
+            const newVersion = newVersionEl ? newVersionEl.textContent.trim() : null;
+            
+            // Construct URL with specific version tag
+            const url = newVersion 
+                ? `https://github.com/jay-bman725/AutoCaption/releases/tag/v${newVersion}`
+                : 'https://github.com/jay-bman725/AutoCaption/releases'; // Fallback to general releases
+                
+            await window.electronAPI.openExternalUrl(url);
             this.closeUpdateDialog();
         } catch (error) {
             console.error('Error opening releases page:', error);
