@@ -27,7 +27,7 @@ Easily transcribe and generate SRT captions from audio or video files — with a
    ```bash
    git clone https://github.com/your-username/AutoCaption.git
    cd AutoCaption
-````
+   ```
 
 2. Install dependencies:
 
@@ -47,7 +47,7 @@ Easily transcribe and generate SRT captions from audio or video files — with a
 
 ### 📦 From GitHub Releases
 
-Prebuilt installers for **Windows, macOS (arm64 + x64), and Linux** are available under the [Releases tab](https://github.com/your-username/AutoCaption/releases).
+Prebuilt installers for **Windows, macOS (arm64 + x64), and Linux** are available under the [Releases tab](https://github.com/jay-bman725/AutoCaption/releases/tag/v1.0.0).
 Just download, install, and go.
 
 ---
@@ -114,4 +114,3 @@ That removes the quarantine flag. Then it should open just fine.
 ## 📄 License
 
 [MIT License](./LICENSE)
-
