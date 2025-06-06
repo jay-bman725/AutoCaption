@@ -1,7 +1,7 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
-## [1.2.0] - 2025-01-29
+## [1.2.0] - 2025-06-06
 
 ### Added
 - **Dark Mode Support**: Complete dark mode implementation with automatic system theme detection
