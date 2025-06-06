@@ -92,22 +92,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
-      - name: Upload macOS x64 installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-build-x64
-          path: dist/*-x64.dmg
+      - name: Rename x64 .dmg
+        run: |
+          FILE=$(ls dist/*.dmg | head -n 1)
+          mv "$FILE" "dist/AutoCaption-x64.dmg"
 
       - name: Build macOS arm64
         run: npx electron-builder --mac --arm64
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
-      - name: Upload macOS arm64 installer
+      - name: Rename arm64 .dmg
+        run: |
+          FILE=$(ls dist/*.dmg | head -n 1)
+          mv "$FILE" "dist/AutoCaption-arm64.dmg"
+
+      - name: Upload macOS installers
         uses: actions/upload-artifact@v4
         with:
-          name: macos-build-arm64
-          path: dist/*-arm64.dmg
+          name: macos-build
+          path: dist/*.dmg
 
   release:
     needs: [build-linux, build-windows, build-macos, read-version]
@@ -130,6 +134,5 @@ jobs:
             combined-artifacts/linux-build/*.deb
             combined-artifacts/linux-build/*.AppImage
             combined-artifacts/windows-build/*.exe
-            combined-artifacts/macos-build-x64/*.dmg
-            combined-artifacts/macos-build-arm64/*.dmg
+            combined-artifacts/macos-build/*.dmg
           token: ${{ secrets.GH_PAT }}
