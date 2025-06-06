@@ -38,19 +38,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
-      - name: Rename Linux installers
-        run: |
-          VERSION=${{ needs.read-version.outputs.version }}
-          for f in dist/*.AppImage dist/*.deb; do
-            ext="${f##*.}"
-            mv "$f" "dist/linux-AutoCaption-v${VERSION}.${ext}"
-          done
-
       - name: Upload Linux installers
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
-          path: dist/linux-AutoCaption-v*.{deb,AppImage}
+          path: |
+            dist/*.deb
+            dist/*.AppImage
 
   build-windows:
     needs: read-version
@@ -75,23 +69,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
-      - name: Rename Windows installer
-        shell: bash
-        run: |
-          VERSION=${{ needs.read-version.outputs.version }}
-          ARCH=${{ matrix.arch }}
-          FILE=$(ls dist/*.exe | head -n 1)
-          NAME="windows-AutoCaption-v${VERSION}"
-          if [ "$ARCH" = "arm64" ]; then
-            NAME="${NAME}-arm64"
-          fi
-          mv "$FILE" "dist/${NAME}.exe"
-
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build-${{ matrix.arch }}
-          path: dist/windows-AutoCaption-v*.exe
+          name: windows-build
+          path: dist/*.exe
 
   build-macos:
     needs: read-version
@@ -113,28 +95,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
-      - name: Rename x64 .dmg
-        run: |
-          VERSION=${{ needs.read-version.outputs.version }}
-          FILE=$(ls dist/*.dmg | grep -v arm64 | head -n 1)
-          mv "$FILE" "dist/macos-AutoCaption-v${VERSION}-x64.dmg"
-
       - name: Build macOS arm64
         run: npx electron-builder --mac --arm64
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
-      - name: Rename arm64 .dmg
-        run: |
-          VERSION=${{ needs.read-version.outputs.version }}
-          FILE=$(ls dist/*.dmg | head -n 1)
-          mv "$FILE" "dist/macos-AutoCaption-v${VERSION}-arm64.dmg"
-
       - name: Upload macOS installers
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
-          path: dist/macos-AutoCaption-v*.dmg
+          path: dist/*.dmg
 
   release:
     needs: [build-linux, build-windows, build-macos, read-version]
@@ -148,15 +118,37 @@ jobs:
       - name: List artifact directory contents
         run: find combined-artifacts
 
+      - name: Rename files for release
+        run: |
+          VERSION="v${{ needs.read-version.outputs.version }}"
+          mkdir renamed
+
+          # Linux
+          for f in combined-artifacts/linux-build/*; do
+            ext="${f##*.}"
+            cp "$f" "renamed/linux-AutoCaption-${VERSION}.${ext}"
+          done
+
+          # Windows
+          for f in combined-artifacts/windows-build/*; do
+            base="$(basename "$f")"
+            arch="x64"
+            [[ "$base" == *arm64* ]] && arch="arm64"
+            cp "$f" "renamed/windows-AutoCaption-${VERSION}-${arch}.exe"
+          done
+
+          # macOS
+          for f in combined-artifacts/macos-build/*; do
+            base="$(basename "$f")"
+            arch="x64"
+            [[ "$base" == *arm64* ]] && arch="arm64"
+            cp "$f" "renamed/macos-AutoCaption-${VERSION}-${arch}.dmg"
+          done
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.read-version.outputs.version }}
           name: v${{ needs.read-version.outputs.version }}
-          files: |
-            combined-artifacts/linux-build/linux-AutoCaption-v*.deb
-            combined-artifacts/linux-build/linux-AutoCaption-v*.AppImage
-            combined-artifacts/windows-build-x64/windows-AutoCaption-v*.exe
-            combined-artifacts/windows-build-arm64/windows-AutoCaption-v*.exe
-            combined-artifacts/macos-build/macos-AutoCaption-v*.dmg
+          files: renamed/*
           token: ${{ secrets.GH_PAT }}
