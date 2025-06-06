@@ -58,7 +58,7 @@ All dates are in YYYY/MM/DD (Year-Month-Day)
 
 ---
 
-## Release Notes
+# Release Notes
 
 ### Version Naming Convention
 - **Major version** (x.0.0): Significant new features or breaking changes
