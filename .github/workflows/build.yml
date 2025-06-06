@@ -38,12 +38,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
-      - name: Upload Linux artifact
+      - name: Upload Linux installers
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
-          path: dist/
-          if-no-files-found: ignore
+          path: |
+            dist/*.deb
+            dist/*.AppImage
 
   build-windows:
     needs: read-version
@@ -65,12 +66,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
-      - name: Upload Windows artifact
+      - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: dist/
-          if-no-files-found: ignore
+          path: dist/*.exe
 
   build-macos:
     needs: read-version
@@ -92,12 +92,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
-      - name: Upload macOS artifact
+      - name: Upload macOS installer
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
-          path: dist/
-          if-no-files-found: ignore
+          path: dist/*.dmg
 
   release:
     needs: [build-linux, build-windows, build-macos, read-version]
@@ -113,5 +112,5 @@ jobs:
         with:
           tag_name: v${{ needs.read-version.outputs.version }}
           name: v${{ needs.read-version.outputs.version }}
-          files: combined-artifacts/**/*
+          files: combined-artifacts/**/*.{deb,AppImage,exe,dmg}
           token: ${{ secrets.GH_PAT }}
