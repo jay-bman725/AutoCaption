@@ -1,25 +1,27 @@
 # 🎧 AutoCaption
 
 **Automatic caption generation powered by OpenAI Whisper**  
-Easily transcribe and generate SRT captions from audio or video files — with a beautiful, modern interface.
+Transcribe audio or video files and generate SRT captions with ease — all through a clean, modern interface.
 
 > 💡 If you find this project helpful, please consider giving it a **⭐️** — it really helps support continued development!
 
-**Are you a Mac OS user? Please check [here](https://github.com/jay-bman725/AutoCaption/tree/main?tab=readme-ov-file#-macos-users--app-is-damaged-fix) to make the app run after copying to the Applications directory**
+**📌 macOS Users:**  
+If you encounter an “app is damaged” error, [click here for a fix](https://github.com/jay-bman725/AutoCaption/tree/main?tab=readme-ov-file#-macos-users--app-is-damaged-fix).
 
 ---
 
 ## ✨ Features
 
-- 🔑 **Plug & Play** — Just enter your OpenAI API key and you're ready to go
-- 🎞 **Wide Format Support** — MP3, WAV, MP4, AVI, MOV, MKV, and more
-- 🗜️ **Smart Processing** — Converts videos to MP3, compresses large audio files only when needed
-- 📏 **Size Optimization** — Automatically handles OpenAI's 25MB limit with intelligent compression
-- 🧠 **Whisper-Powered** — Uses OpenAI Whisper to generate high-quality captions
-- 📝 **Preview & Edit** — View captions before exporting to SRT
-- 📁 **Drag & Drop** — Upload files with ease
-- 🖥 **Cross-platform** — Runs on Windows, macOS (Intel + Apple Silicon), and Linux
-- 🎨 **Modern UI** — Built with Electron, designed for clarity and speed
+- 🔑 **Plug & Play** — Enter your OpenAI API key and get started immediately  
+- 🎞 **Wide Format Support** — Supports MP3, WAV, MP4, AVI, MOV, MKV, and more  
+- 🗜️ **Smart Processing** — Converts video to audio and compresses only when needed  
+- 📏 **Automatic Size Optimization** — Handles OpenAI’s 25MB limit intelligently  
+- 🧠 **Powered by Whisper** — Uses OpenAI Whisper for accurate, high-quality captions  
+- 📝 **Preview & Edit** — View and edit captions before exporting (text only)
+- 📁 **Drag & Drop** — Drop in your files or use the file picker  
+- 🖥 **Cross-platform** — Compatible with Windows, macOS (Intel + Apple Silicon), and Linux  
+- 🎨 **Modern UI** — Sleek, responsive interface built with Electron  
+- 🌓 **Customizable Theme** — Choose Light, Dark, or follow your system setting
 
 ---
 
@@ -49,26 +51,26 @@ Easily transcribe and generate SRT captions from audio or video files — with a
 
 ---
 
-### 📦 From GitHub Releases
+### 📦 Prebuilt Installers
 
-Prebuilt installers for **Windows, macOS (arm64 + x64), and Linux** are available under the [Releases tab](https://github.com/jay-bman725/AutoCaption/releases/).
-Just download, install, and go.
+Installers for **Windows, macOS, and Linux** are available under the [Releases tab](https://github.com/jay-bman725/AutoCaption/releases).
+Just download, install, and you're good to go.
 
 ---
 
 ## 🧪 Usage
 
-1. Launch the app (or run it with `npm start`).
-2. Enter your OpenAI API key when prompted.
-3. Upload an audio or video file via drag-and-drop or file picker.
-4. Click **“Generate SRT Captions.”**
-5. Preview and download your caption file.
+1. Launch the app (or run with `npm start`)
+2. Enter your OpenAI API key when prompted
+3. Upload an audio or video file via drag-and-drop or the file picker
+4. Click **“Generate SRT Captions”**
+5. Preview and export your SRT file
 
 ---
 
 ## 🧰 Development
 
-Start in development mode with hot-reloading and DevTools:
+Run in development mode with hot-reloading and DevTools:
 
 ```bash
 npm run dev
@@ -76,9 +78,9 @@ npm run dev
 
 ---
 
-## 🏗 Building
+## 🏗 Build for Distribution
 
-Create platform-specific builds for distribution:
+Generate platform-specific builds:
 
 ```bash
 npm run build
@@ -89,51 +91,98 @@ npm run build
 ## 🎞 Supported Formats
 
 **Audio**: MP3, WAV, M4A, AAC, OGG, WMA
+
 **Video**: MP4, AVI, MOV, MKV, FLV, WEBM
 
 ---
 
 ## 💻 Requirements
 
-* Node.js 16+
-* An OpenAI API key (with Whisper support)
-* FFmpeg installed on your system (for video conversion)
-* macOS, Windows, or Linux
+* **Node.js**: Version 16 or higher
+* **OpenAI API Key**: With Whisper access
+* **FFmpeg**: Installed and accessible in your system's PATH
+* **Operating System**:
 
-### Installing FFmpeg
+  * **macOS**: Version 10.15 (Catalina) or later, supporting both Intel and Apple Silicon architectures
+  * **Windows**: Windows 10 (Build 1809) or newer
+  * **Linux**:
 
-**macOS** (with Homebrew):
+    * **AppImage Support**: Compatible with most 64-bit Linux distributions, including:
+
+      * Ubuntu 20.04 LTS or newer
+      * Fedora 33 or newer
+      * Debian 10 (Buster) or newer
+      * openSUSE Leap 15.2 or newer
+      * **Note**: Ensure that your system has GTK 3 or higher installed, as Electron applications require it for proper functionality.
+   
+---
+
+## 📦 Install FFmpeg
+
+**macOS (with Homebrew):**
+
 ```bash
 brew install ffmpeg
 ```
 
-**Windows**:
-Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html) or use chocolatey:
+**Windows (with Chocolatey):**
+
 ```bash
 choco install ffmpeg
 ```
 
-**Linux** (Ubuntu/Debian):
+**Windows (Installer from FFmpeg)**
+https://ffmpeg.org/download.html
+
+**Linux (Debian/Ubuntu):**
+
 ```bash
 sudo apt update && sudo apt install ffmpeg
 ```
 
+**For a more in-depth guide, visit [here](https://www.hostinger.com/tutorials/how-to-install-ffmpeg)**
+
 ---
 
-## 🍏 macOS Users — “App is damaged” Fix
+## 🍏 macOS Users — “App is Damaged” Fix
 
-If you see a message saying **"AutoCaption is damaged and can’t be opened"**, it's just macOS being overly strict with unsigned apps.
+If you get the error:
+**"AutoCaption is damaged and can’t be opened"** — don’t worry. This is due to macOS being strict about unsigned apps.
 
-To fix it:
+Fix it with:
 
 ```bash
 xattr -cr /Applications/AutoCaption.app
 ```
 
-That removes the quarantine flag. Then it should open just fine.
+That clears the quarantine flag. The app should open normally afterward.
+
+---
+
+## 📝 TODO
+
+Planned features for upcoming versions:
+
+* 🌐 **Auto-Updater**
+  Seamless updates via GitHub
+
+* 📤 **More Export Formats**
+  Support for VTT and other formats
+
+* 🗂 **Batch Processing**
+  Transcribe multiple files at once
+
+* 🌍 **Language Selection**
+  Select Whisper transcription languages
+
+* 💾 **Transcript History**
+  Save and revisit previous transcriptions
+
+* 🔍 **Live Preview**
+  Real-time subtitle rendering during playback
 
 ---
 
 ## 📄 License
 
-[MIT License](./LICENSE)
+Released under the [MIT License](./LICENSE)
