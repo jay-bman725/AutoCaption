@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Release Electron App
 
 on:
   push:
@@ -13,47 +13,57 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Read version
         id: version
         run: echo "VERSION=$(cat version)" >> $GITHUB_OUTPUT
 
-      - name: Build (replace with your actual command)
+      - name: Build Electron app
         run: |
-          echo "Building for ${{ matrix.os }}"
-          mkdir -p dist
-          echo "Fake binary for ${{ matrix.os }}" > dist/myapp-${{ matrix.os }}
+          npx electron-builder --${
+            matrix.os == 'ubuntu-latest' && 'linux' ||
+            matrix.os == 'macos-latest' && 'mac' ||
+            matrix.os == 'windows-latest' && 'win'
+          }
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.os }}
           path: dist/
+          if-no-files-found: ignore
 
   release:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Read version
         id: version
         run: echo "VERSION=$(cat version)" >> $GITHUB_OUTPUT
 
-      - name: Download all artifacts
+      - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Create GitHub release
+      - name: Create GitHub Release using PAT
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}
           name: v${{ steps.version.outputs.VERSION }}
-          files: artifacts/**/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: artifacts/**/*  # include all platform builds
+          token: ${{ secrets.GH_PAT }}
