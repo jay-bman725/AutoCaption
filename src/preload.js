@@ -18,5 +18,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onApiKeyLoaded: (callback) => ipcRenderer.on('api-key-loaded', callback),
   
   // Listen for transcription status updates
-  onTranscriptionStatus: (callback) => ipcRenderer.on('transcription-status', callback)
+  onTranscriptionStatus: (callback) => ipcRenderer.on('transcription-status', callback),
+  
+  // Listen for update dialog
+  onShowUpdateDialog: (callback) => ipcRenderer.on('show-update-dialog', callback)
 });

@@ -44,8 +44,9 @@ let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.1.0';
+const CURRENT_VERSION = '1.1.1';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
+const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
 // Path for storing the API key and settings
 const configDir = path.join(app.getPath('userData'), 'config');
@@ -478,7 +479,8 @@ ipcMain.handle('check-for-updates', async () => {
   try {
     const result = await checkForUpdates();
     if (result.success) {
-      showUpdateDialog(result, true);
+      const changelogResult = await fetchChangelog();
+      showUpdateDialog(result, true, changelogResult);
       // Update last check time
       const settings = await loadSettings();
       settings.lastUpdateCheck = Date.now();
@@ -511,6 +513,86 @@ async function saveSettings(settings) {
   } catch (error) {
     console.error('Error saving settings:', error);
     return false;
+  }
+}
+
+// Fetch changelog from GitHub
+async function fetchChangelog() {
+  return new Promise((resolve) => {
+    const request = https.get(CHANGELOG_URL, (response) => {
+      let data = '';
+      
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      response.on('end', () => {
+        try {
+          resolve({ success: true, changelog: data });
+        } catch (error) {
+          resolve({ success: false, error: error.message });
+        }
+      });
+    });
+    
+    request.on('error', (error) => {
+      resolve({ success: false, error: error.message });
+    });
+    
+    request.setTimeout(10000, () => {
+      request.destroy();
+      resolve({ success: false, error: 'Request timeout' });
+    });
+  });
+}
+
+// Parse changelog to extract relevant entries
+function parseChangelog(changelogText, latestVersion) {
+  try {
+    const lines = changelogText.split('\n');
+    const entries = [];
+    let currentEntry = null;
+    let inEntry = false;
+    
+    for (const line of lines) {
+      // Check for version header
+      const versionMatch = line.match(/^## \[(\d+\.\d+\.\d+)\]/);
+      if (versionMatch) {
+        // Save previous entry if exists
+        if (currentEntry && inEntry) {
+          entries.push(currentEntry);
+        }
+        
+        const version = versionMatch[1];
+        currentEntry = {
+          version,
+          content: [line]
+        };
+        inEntry = true;
+        continue;
+      }
+      
+      // If we're in an entry, add content
+      if (inEntry && currentEntry) {
+        // Stop when we hit the next version or end of changelog
+        if (line.startsWith('## [') && !line.includes(currentEntry.version)) {
+          entries.push(currentEntry);
+          break;
+        }
+        currentEntry.content.push(line);
+      }
+    }
+    
+    // Add the last entry if exists
+    if (currentEntry && inEntry) {
+      entries.push(currentEntry);
+    }
+    
+    // Return only the latest few versions (up to 3)
+    return entries.slice(0, 3);
+  } catch (error) {
+    console.error('Error parsing changelog:', error);
+    return [];
   }
 }
 
@@ -576,7 +658,8 @@ async function startAutoUpdateCheck() {
   setTimeout(async () => {
     const result = await checkForUpdates();
     if (result.success && result.hasUpdate && mainWindow) {
-      showUpdateDialog(result, false);
+      const changelogResult = await fetchChangelog();
+      showUpdateDialog(result, false, changelogResult);
     }
     // Update last check time
     const updatedSettings = await loadSettings();
@@ -591,7 +674,8 @@ async function startAutoUpdateCheck() {
     
     const result = await checkForUpdates();
     if (result.success && result.hasUpdate && mainWindow) {
-      showUpdateDialog(result, false);
+      const changelogResult = await fetchChangelog();
+      showUpdateDialog(result, false, changelogResult);
     }
     // Update last check time
     currentSettings.lastUpdateCheck = Date.now();
@@ -599,26 +683,19 @@ async function startAutoUpdateCheck() {
   }, 60 * 60 * 1000); // Check every hour
 }
 
-// Show update dialog
-function showUpdateDialog(updateResult, isManual) {
+// Show update dialog with custom changelog window
+function showUpdateDialog(updateResult, isManual, changelogResult = null) {
   if (!mainWindow) return;
   
   if (updateResult.hasUpdate) {
-    const options = {
-      type: 'info',
-      title: 'Update Available',
-      message: `A new version of AutoCaption is available!`,
-      detail: `Current version: ${updateResult.currentVersion}\nNew version: ${updateResult.latestVersion}\n\nWould you like to download the update?`,
-      buttons: ['Download Update', 'Later'],
-      defaultId: 0
+    // Send update data to renderer process to show custom dialog
+    const updateData = {
+      currentVersion: updateResult.currentVersion,
+      latestVersion: updateResult.latestVersion,
+      changelog: changelogResult && changelogResult.success ? changelogResult.changelog : null
     };
     
-    dialog.showMessageBox(mainWindow, options).then((response) => {
-      if (response.response === 0) {
-        // Open GitHub releases page
-        shell.openExternal('https://github.com/jay-bman725/AutoCaption/releases');
-      }
-    });
+    mainWindow.webContents.send('show-update-dialog', updateData);
   } else if (isManual) {
     // Only show "no updates" dialog if manually triggered
     const options = {

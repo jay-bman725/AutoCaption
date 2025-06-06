@@ -59,7 +59,7 @@
                         <div class="setting-group">
                             <h3>ℹ️ About</h3>
                             <div class="setting-item">
-                                <p><strong>Version:</strong> 1.1.0</p>
+                                <p><strong>Version:</strong> 1.0.0</p>
                                 <p><strong>Made with ❤️ by Jay</strong></p>
                                 <p>Using OpenAI Whisper for AI-powered transcription</p>
                             </div>
@@ -68,6 +68,36 @@
                     <div class="modal-footer">
                         <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
                         <button id="cancel-settings-btn" class="btn btn-outline">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update Dialog Modal -->
+            <div id="update-modal" class="modal">
+                <div class="modal-content update-modal-content">
+                    <div class="modal-header">
+                        <h2>🎉 Update Available!</h2>
+                        <button id="close-update-btn" class="btn btn-icon">✖️</button>
+                    </div>
+                    <div class="modal-body update-modal-body">
+                        <div class="update-info">
+                            <p><strong>Current version:</strong> <span id="current-version"></span></p>
+                            <p><strong>New version:</strong> <span id="new-version"></span></p>
+                            <p>A new version of AutoCaption is available! Would you like to download it?</p>
+                        </div>
+                        
+                        <div class="changelog-section">
+                            <h3>📋 What's New</h3>
+                            <div id="changelog-container" class="changelog-container">
+                                <div id="changelog-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="download-update-btn" class="btn btn-primary">
+                            <span>📥 Download Update</span>
+                        </button>
+                        <button id="later-update-btn" class="btn btn-secondary">Later</button>
                     </div>
                 </div>
             </div>
