@@ -139,12 +139,14 @@ jobs:
           done
 
           # macOS
-          for f in combined-artifacts/macos-build/*x64.dmg; do
-            cp "$f" "renamed/macos-AutoCaption-${VERSION}-x64.dmg"
-          done
-
-          for f in combined-artifacts/macos-build/*arm64.dmg; do
-            cp "$f" "renamed/macos-AutoCaption-${VERSION}-arm64.dmg"
+          i=0
+          for f in combined-artifacts/macos-build/*.dmg; do
+            if [ "$i" -eq 0 ]; then
+              cp "$f" "renamed/macos-AutoCaption-${VERSION}-x64.dmg"
+            else
+              cp "$f" "renamed/macos-AutoCaption-${VERSION}-arm64.dmg"
+            fi
+            i=$((i + 1))
           done
 
       - name: Create GitHub Release
