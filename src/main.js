@@ -107,7 +107,7 @@ let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.2.0';
+const CURRENT_VERSION = '1.3.0';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
@@ -120,7 +120,15 @@ const settingsFile = path.join(configDir, 'settings.json');
 const defaultSettings = {
   autoCheckUpdates: true,
   lastUpdateCheck: null,
-  theme: 'system'
+  theme: 'system',
+  onboardingCompleted: false,
+  onboardingVersion: null,
+  onboardingSteps: {
+    welcome: false,
+    apiKey: false,
+    theme: false,
+    complete: false
+  }
 };
 
 // Ensure config directory exists
@@ -652,6 +660,75 @@ nativeTheme.on('updated', () => {
   if (mainWindow) {
     const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
     mainWindow.webContents.send('system-theme-changed', { theme });
+  }
+});
+
+// Onboarding IPC handlers
+ipcMain.handle('get-onboarding-status', async () => {
+  try {
+    const settings = await loadSettings();
+    return {
+      success: true,
+      shouldShowOnboarding: !settings.onboardingCompleted || settings.onboardingVersion !== CURRENT_VERSION,
+      onboardingSteps: settings.onboardingSteps || defaultSettings.onboardingSteps,
+      currentVersion: CURRENT_VERSION,
+      onboardingVersion: settings.onboardingVersion
+    };
+  } catch (error) {
+    logger.error('Error getting onboarding status:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('complete-onboarding-step', async (event, stepName) => {
+  try {
+    const settings = await loadSettings();
+    if (!settings.onboardingSteps) {
+      settings.onboardingSteps = { ...defaultSettings.onboardingSteps };
+    }
+    settings.onboardingSteps[stepName] = true;
+    
+    const saved = await saveSettings(settings);
+    return { success: saved };
+  } catch (error) {
+    logger.error('Error completing onboarding step:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('complete-onboarding', async () => {
+  try {
+    const settings = await loadSettings();
+    settings.onboardingCompleted = true;
+    settings.onboardingVersion = CURRENT_VERSION;
+    settings.onboardingSteps = {
+      welcome: true,
+      apiKey: true,
+      theme: true,
+      complete: true
+    };
+    
+    const saved = await saveSettings(settings);
+    return { success: saved };
+  } catch (error) {
+    logger.error('Error completing onboarding:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('skip-onboarding', async () => {
+  try {
+    const settings = await loadSettings();
+    settings.onboardingCompleted = true;
+    settings.onboardingVersion = CURRENT_VERSION;
+    // Mark as completed but don't mark individual steps as done
+    // so if onboarding is triggered again, it shows what still needs to be done
+    
+    const saved = await saveSettings(settings);
+    return { success: saved };
+  } catch (error) {
+    logger.error('Error skipping onboarding:', error);
+    return { success: false, error: error.message };
   }
 });
 

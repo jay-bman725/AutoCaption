@@ -30,5 +30,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onShowUpdateDialog: (callback) => ipcRenderer.on('show-update-dialog', callback),
   
   // Listen for system theme changes
-  onSystemThemeChanged: (callback) => ipcRenderer.on('system-theme-changed', callback)
+  onSystemThemeChanged: (callback) => ipcRenderer.on('system-theme-changed', callback),
+  
+  // Onboarding management
+  getOnboardingStatus: () => ipcRenderer.invoke('get-onboarding-status'),
+  completeOnboardingStep: (stepName) => ipcRenderer.invoke('complete-onboarding-step', stepName),
+  completeOnboarding: () => ipcRenderer.invoke('complete-onboarding'),
+  skipOnboarding: () => ipcRenderer.invoke('skip-onboarding')
 });

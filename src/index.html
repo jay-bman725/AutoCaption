@@ -15,6 +15,214 @@
     </div>
     
     <div class="container">
+        <!-- Onboarding Modal -->
+        <div id="onboarding-modal" class="modal onboarding-modal">
+            <div class="modal-content onboarding-modal-content">
+                <div class="modal-header">
+                    <h2 id="onboarding-title">🎬 Welcome to AutoCaption!</h2>
+                </div>
+                <div class="modal-body onboarding-modal-body">
+                    <!-- Step 1: Welcome -->
+                    <div id="onboarding-step-welcome" class="onboarding-step active">
+                        <div class="onboarding-content">
+                            <div class="onboarding-icon">🎬</div>
+                            <h3>Welcome to AutoCaption!</h3>
+                            <p>AutoCaption is your AI-powered solution for generating professional captions and subtitles for your videos and audio files.</p>
+                            
+                            <div class="feature-list">
+                                <div class="feature-item">
+                                    <span class="feature-icon">🎯</span>
+                                    <div class="feature-text">
+                                        <strong>High Accuracy</strong>
+                                        <p>Powered by OpenAI's Whisper AI for industry-leading transcription accuracy</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="feature-icon">🎬</span>
+                                    <div class="feature-text">
+                                        <strong>Multiple Formats</strong>
+                                        <p>Supports video files (MP4, AVI, MOV) and audio files (MP3, WAV, M4A)</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="feature-icon">⚡</span>
+                                    <div class="feature-text">
+                                        <strong>Fast Processing</strong>
+                                        <p>Automatic file conversion and compression for optimal transcription speed</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="feature-icon">📄</span>
+                                    <div class="feature-text">
+                                        <strong>SRT Output</strong>
+                                        <p>Generates standard SubRip (.srt) files compatible with all video editors</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: API Key Setup -->
+                    <div id="onboarding-step-apikey" class="onboarding-step">
+                        <div class="onboarding-content">
+                            <div class="onboarding-icon">🔑</div>
+                            <h3>Setup OpenAI API Key</h3>
+                            <p>AutoCaption uses OpenAI's Whisper API for transcription. You'll need an API key to get started.</p>
+                            
+                            <div class="step-status" id="apikey-step-status">
+                                <span class="status-icon">⏳</span>
+                                <span class="status-text">API key required</span>
+                            </div>
+                            
+                            <div class="onboarding-input-group">
+                                <label for="onboarding-api-key-input">OpenAI API Key</label>
+                                <input type="password" id="onboarding-api-key-input" placeholder="sk-...">
+                                <button id="onboarding-validate-key-btn" class="btn btn-secondary">
+                                    <span id="onboarding-validate-text">Validate Key</span>
+                                    <div id="onboarding-validate-spinner" class="spinner" style="display: none;"></div>
+                                </button>
+                            </div>
+                            
+                            <div class="onboarding-help">
+                                <p><strong>Need an API key?</strong></p>
+                                <p>1. Visit <a href="https://platform.openai.com/api-keys" id="onboarding-openai-link">OpenAI Platform</a></p>
+                                <p>2. Create a new API key</p>
+                                <p>3. Copy and paste it above</p>
+                                <p class="cost-note">💰 <em>Note: OpenAI charges per minute of audio transcribed (~$0.006/minute)</em></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Theme Selection -->
+                    <div id="onboarding-step-theme" class="onboarding-step">
+                        <div class="onboarding-content">
+                            <div class="onboarding-icon">🎨</div>
+                            <h3>Choose Your Theme</h3>
+                            <p>Select your preferred appearance. You can change this later in Settings.</p>
+                            
+                            <div class="step-status" id="theme-step-status">
+                                <span class="status-icon">⏳</span>
+                                <span class="status-text">Theme selection required</span>
+                            </div>
+                            
+                            <div class="theme-options">
+                                <div class="theme-option" data-theme="system">
+                                    <div class="theme-preview">
+                                        <div class="theme-preview-header">
+                                            <div class="theme-preview-dot"></div>
+                                            <div class="theme-preview-dot"></div>
+                                            <div class="theme-preview-dot"></div>
+                                        </div>
+                                        <div class="theme-preview-body system-preview">
+                                            <div class="theme-preview-sidebar"></div>
+                                            <div class="theme-preview-content">
+                                                <div class="theme-preview-line"></div>
+                                                <div class="theme-preview-line short"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="theme-option-info">
+                                        <h4>🖥️ System Default</h4>
+                                        <p>Automatically follows your system theme</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="theme-option" data-theme="light">
+                                    <div class="theme-preview">
+                                        <div class="theme-preview-header light">
+                                            <div class="theme-preview-dot"></div>
+                                            <div class="theme-preview-dot"></div>
+                                            <div class="theme-preview-dot"></div>
+                                        </div>
+                                        <div class="theme-preview-body light">
+                                            <div class="theme-preview-sidebar"></div>
+                                            <div class="theme-preview-content">
+                                                <div class="theme-preview-line"></div>
+                                                <div class="theme-preview-line short"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="theme-option-info">
+                                        <h4>☀️ Light Mode</h4>
+                                        <p>Clean and bright interface</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="theme-option" data-theme="dark">
+                                    <div class="theme-preview">
+                                        <div class="theme-preview-header dark">
+                                            <div class="theme-preview-dot"></div>
+                                            <div class="theme-preview-dot"></div>
+                                            <div class="theme-preview-dot"></div>
+                                        </div>
+                                        <div class="theme-preview-body dark">
+                                            <div class="theme-preview-sidebar"></div>
+                                            <div class="theme-preview-content">
+                                                <div class="theme-preview-line"></div>
+                                                <div class="theme-preview-line short"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="theme-option-info">
+                                        <h4>🌙 Dark Mode</h4>
+                                        <p>Easy on the eyes for long sessions</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Complete -->
+                    <div id="onboarding-step-complete" class="onboarding-step">
+                        <div class="onboarding-content">
+                            <div class="onboarding-icon">🎉</div>
+                            <h3>You're All Set!</h3>
+                            <p>AutoCaption is now configured and ready to use. Here's what you can do next:</p>
+                            
+                            <div class="completion-checklist">
+                                <div class="checklist-item">
+                                    <span class="checklist-icon">✅</span>
+                                    <span>API key configured and validated</span>
+                                </div>
+                                <div class="checklist-item">
+                                    <span class="checklist-icon">✅</span>
+                                    <span>Theme preference saved</span>
+                                </div>
+                                <div class="checklist-item">
+                                    <span class="checklist-icon">✅</span>
+                                    <span>Ready to generate captions</span>
+                                </div>
+                            </div>
+                            
+                            <div class="next-steps">
+                                <h4>Quick Start:</h4>
+                                <ol>
+                                    <li>Click "Get Started" to begin</li>
+                                    <li>Upload your video or audio file</li>
+                                    <li>Click "Generate Captions"</li>
+                                    <li>Download or copy your SRT file</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer onboarding-footer">
+                    <div class="onboarding-progress">
+                        <div class="progress-bar">
+                            <div id="onboarding-progress-fill" class="progress-fill"></div>
+                        </div>
+                        <span id="onboarding-step-counter">1 of 4</span>
+                    </div>
+                    <div class="onboarding-actions">
+                        <button id="onboarding-back-btn" class="btn btn-outline" style="display: none;">Back</button>
+                        <button id="onboarding-skip-btn" class="btn btn-outline">Skip</button>
+                        <button id="onboarding-next-btn" class="btn btn-primary">Next</button>
+                        <button id="onboarding-finish-btn" class="btn btn-primary" style="display: none;">Get Started</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <header>
             <div class="header-content">
                 <h1>🎬 AutoCaption</h1>
@@ -71,7 +279,7 @@
                         <div class="setting-group">
                             <h3>ℹ️ About</h3>
                             <div class="setting-item">
-                                <p><strong>Version:</strong> 1.2.0</p>
+                                <p><strong>Version:</strong> 1.3.0</p>
                                 <p><strong>Made with ❤️ by Jay</strong></p>
                                 <p>Using OpenAI Whisper for AI-powered transcription</p>
                             </div>
@@ -124,7 +332,7 @@
             </div>
 
             <!-- API Key Setup -->
-            <div id="api-key-section" class="section">
+            <div id="api-key-section" class="section" style="display: none;">
                 <div class="card">
                     <div class="card-header">
                         <h2>🔑 OpenAI API Key</h2>
@@ -147,7 +355,7 @@
             </div>
 
             <!-- File Upload -->
-            <div id="upload-section" class="section" style="display: none;">
+            <div id="upload-section" class="section">
                 <div class="card">
                     <div class="card-header">
                         <h2>📁 Upload Media File</h2>

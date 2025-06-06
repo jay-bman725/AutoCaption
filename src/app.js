@@ -5,11 +5,18 @@ class AutoCaptionApp {
         this.apiKeySet = false;
         this.settings = null;
         this.currentTheme = 'system';
+        this.onboardingState = {
+            currentStep: 1,
+            totalSteps: 4,
+            completedSteps: {},
+            selectedTheme: 'system'
+        };
         
         this.initializeEventListeners();
         this.setupApiKeyLoadListener();
         this.setupThemeSystem();
         this.loadSettings();
+        this.checkOnboardingStatus();
     }
 
     setupApiKeyLoadListener() {
@@ -177,6 +184,33 @@ class AutoCaptionApp {
         document.getElementById('preview-btn').addEventListener('click', () => this.togglePreview());
         document.getElementById('copy-btn').addEventListener('click', () => this.copySrt());
         document.getElementById('download-btn').addEventListener('click', () => this.downloadSrt());
+
+        // Onboarding
+        document.getElementById('onboarding-next-btn').addEventListener('click', () => this.nextOnboardingStep());
+        document.getElementById('onboarding-back-btn').addEventListener('click', () => this.previousOnboardingStep());
+        document.getElementById('onboarding-skip-btn').addEventListener('click', () => this.skipOnboarding());
+        document.getElementById('onboarding-finish-btn').addEventListener('click', () => this.finishOnboarding());
+        
+        // Onboarding API key validation
+        document.getElementById('onboarding-validate-key-btn').addEventListener('click', () => this.validateOnboardingApiKey());
+        document.getElementById('onboarding-api-key-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.validateOnboardingApiKey();
+        });
+        
+        // Onboarding theme selection
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.addEventListener('click', () => this.selectOnboardingTheme(option.dataset.theme));
+        });
+        
+        // Onboarding external link
+        document.getElementById('onboarding-openai-link').addEventListener('click', (e) => this.handleExternalLink(e));
+        
+        // Onboarding modal backdrop click to close (skip)
+        document.getElementById('onboarding-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('onboarding-modal')) {
+                this.skipOnboarding();
+            }
+        });
     }
 
     async setApiKey() {
@@ -730,6 +764,326 @@ class AutoCaptionApp {
         html = html.replace(/<\/h[1-6]>\s*<br>/g, (match) => match.replace('<br>', '')); // Remove breaks after headers
 
         return html;
+    }
+
+    // Onboarding Methods
+    async checkOnboardingStatus() {
+        try {
+            const result = await window.electronAPI.getOnboardingStatus();
+            if (result.success && result.shouldShowOnboarding) {
+                console.log('[DEBUG] Showing onboarding - shouldShow:', result.shouldShowOnboarding);
+                console.log('[DEBUG] Current version:', result.currentVersion, 'Onboarding version:', result.onboardingVersion);
+                
+                // Update completed steps from saved data
+                this.onboardingState.completedSteps = result.onboardingSteps || {};
+                
+                // If this is a version change, mark completed steps with checkmarks
+                if (result.onboardingVersion && result.onboardingVersion !== result.currentVersion) {
+                    this.setupVersionUpdateOnboarding();
+                }
+                
+                this.showOnboarding();
+            } else {
+                console.log('[DEBUG] Onboarding not needed');
+            }
+        } catch (error) {
+            console.error('Error checking onboarding status:', error);
+        }
+    }
+
+    setupVersionUpdateOnboarding() {
+        // For version updates, show what was already completed
+        const steps = ['welcome', 'apiKey', 'theme', 'complete'];
+        const stepIds = ['welcome', 'apikey', 'theme', 'complete'];
+        
+        steps.forEach((step, index) => {
+            if (this.onboardingState.completedSteps[step]) {
+                const statusEl = document.getElementById(`${stepIds[index]}-step-status`);
+                if (statusEl) {
+                    statusEl.classList.remove('error');
+                    statusEl.classList.add('completed');
+                    statusEl.querySelector('.status-icon').textContent = '✅';
+                    statusEl.querySelector('.status-text').textContent = 'Already completed';
+                }
+            }
+        });
+    }
+
+    showOnboarding() {
+        const modal = document.getElementById('onboarding-modal');
+        modal.classList.add('show');
+        this.updateOnboardingStep();
+    }
+
+    hideOnboarding() {
+        const modal = document.getElementById('onboarding-modal');
+        modal.classList.remove('show');
+    }
+
+    updateOnboardingStep() {
+        const steps = ['welcome', 'apikey', 'theme', 'complete'];
+        const currentStepName = steps[this.onboardingState.currentStep - 1];
+        
+        // Hide all steps
+        document.querySelectorAll('.onboarding-step').forEach(step => {
+            step.classList.remove('active');
+        });
+        
+        // Show current step
+        const currentStepEl = document.getElementById(`onboarding-step-${currentStepName}`);
+        if (currentStepEl) {
+            currentStepEl.classList.add('active');
+        }
+        
+        // Update progress
+        const progressFill = document.getElementById('onboarding-progress-fill');
+        const stepCounter = document.getElementById('onboarding-step-counter');
+        const progress = (this.onboardingState.currentStep / this.onboardingState.totalSteps) * 100;
+        
+        progressFill.style.width = `${progress}%`;
+        stepCounter.textContent = `${this.onboardingState.currentStep} of ${this.onboardingState.totalSteps}`;
+        
+        // Update button visibility
+        const backBtn = document.getElementById('onboarding-back-btn');
+        const nextBtn = document.getElementById('onboarding-next-btn');
+        const finishBtn = document.getElementById('onboarding-finish-btn');
+        const skipBtn = document.getElementById('onboarding-skip-btn');
+        
+        backBtn.style.display = this.onboardingState.currentStep > 1 ? 'block' : 'none';
+        
+        if (this.onboardingState.currentStep === this.onboardingState.totalSteps) {
+            nextBtn.style.display = 'none';
+            finishBtn.style.display = 'block';
+            skipBtn.style.display = 'none';
+        } else {
+            nextBtn.style.display = 'block';
+            finishBtn.style.display = 'none';
+            skipBtn.style.display = 'block';
+        }
+        
+        // Update step-specific UI
+        this.updateStepUI(currentStepName);
+    }
+
+    updateStepUI(stepName) {
+        switch (stepName) {
+            case 'apikey':
+                this.updateApiKeyStepUI();
+                break;
+            case 'theme':
+                this.updateThemeStepUI();
+                break;
+        }
+    }
+
+    updateApiKeyStepUI() {
+        const statusEl = document.getElementById('apikey-step-status');
+        const nextBtn = document.getElementById('onboarding-next-btn');
+        
+        if (this.onboardingState.completedSteps.apiKey || this.apiKeySet) {
+            statusEl.classList.remove('error');
+            statusEl.classList.add('completed');
+            statusEl.querySelector('.status-icon').textContent = '✅';
+            statusEl.querySelector('.status-text').textContent = 'API key configured';
+            nextBtn.disabled = false;
+        } else {
+            statusEl.classList.remove('completed');
+            statusEl.querySelector('.status-icon').textContent = '⏳';
+            statusEl.querySelector('.status-text').textContent = 'API key required';
+            nextBtn.disabled = true;
+        }
+    }
+
+    updateThemeStepUI() {
+        const statusEl = document.getElementById('theme-step-status');
+        const nextBtn = document.getElementById('onboarding-next-btn');
+        
+        if (this.onboardingState.completedSteps.theme || this.onboardingState.selectedTheme) {
+            statusEl.classList.remove('error');
+            statusEl.classList.add('completed');
+            statusEl.querySelector('.status-icon').textContent = '✅';
+            statusEl.querySelector('.status-text').textContent = 'Theme selected';
+            nextBtn.disabled = false;
+        }
+        
+        // Update theme selection UI
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.classList.remove('selected');
+            if (option.dataset.theme === this.onboardingState.selectedTheme) {
+                option.classList.add('selected');
+            }
+        });
+    }
+
+    async nextOnboardingStep() {
+        const steps = ['welcome', 'apikey', 'theme', 'complete'];
+        const currentStepName = steps[this.onboardingState.currentStep - 1];
+        
+        // Validate current step
+        if (!await this.validateCurrentStep(currentStepName)) {
+            return;
+        }
+        
+        // Mark current step as completed
+        await this.completeOnboardingStep(currentStepName);
+        
+        if (this.onboardingState.currentStep < this.onboardingState.totalSteps) {
+            this.onboardingState.currentStep++;
+            this.updateOnboardingStep();
+        }
+    }
+
+    previousOnboardingStep() {
+        if (this.onboardingState.currentStep > 1) {
+            this.onboardingState.currentStep--;
+            this.updateOnboardingStep();
+        }
+    }
+
+    async validateCurrentStep(stepName) {
+        switch (stepName) {
+            case 'welcome':
+                return true; // Always valid
+            case 'apikey':
+                return this.apiKeySet || this.onboardingState.completedSteps.apiKey;
+            case 'theme':
+                return this.onboardingState.selectedTheme !== null;
+            case 'complete':
+                return true;
+            default:
+                return true;
+        }
+    }
+
+    async completeOnboardingStep(stepName) {
+        try {
+            const result = await window.electronAPI.completeOnboardingStep(stepName);
+            if (result.success) {
+                this.onboardingState.completedSteps[stepName] = true;
+                console.log(`[DEBUG] Completed onboarding step: ${stepName}`);
+            }
+        } catch (error) {
+            console.error(`Error completing onboarding step ${stepName}:`, error);
+        }
+    }
+
+    async validateOnboardingApiKey() {
+        const apiKey = document.getElementById('onboarding-api-key-input').value.trim();
+        const btn = document.getElementById('onboarding-validate-key-btn');
+        const btnText = document.getElementById('onboarding-validate-text');
+        const spinner = document.getElementById('onboarding-validate-spinner');
+        const statusEl = document.getElementById('apikey-step-status');
+
+        if (!apiKey) {
+            statusEl.classList.add('error');
+            statusEl.querySelector('.status-icon').textContent = '❌';
+            statusEl.querySelector('.status-text').textContent = 'Please enter an API key';
+            return;
+        }
+
+        btn.disabled = true;
+        btnText.style.display = 'none';
+        spinner.style.display = 'block';
+
+        try {
+            const result = await window.electronAPI.setApiKey(apiKey);
+            
+            if (result.success) {
+                this.apiKeySet = true;
+                statusEl.classList.remove('error');
+                statusEl.classList.add('completed');
+                statusEl.querySelector('.status-icon').textContent = '✅';
+                statusEl.querySelector('.status-text').textContent = 'API key validated and saved!';
+                
+                // Clear the input for security
+                document.getElementById('onboarding-api-key-input').value = '';
+                
+                // Enable next button
+                document.getElementById('onboarding-next-btn').disabled = false;
+            } else {
+                statusEl.classList.add('error');
+                statusEl.querySelector('.status-icon').textContent = '❌';
+                statusEl.querySelector('.status-text').textContent = `Invalid API key: ${result.error}`;
+            }
+        } catch (error) {
+            statusEl.classList.add('error');
+            statusEl.querySelector('.status-icon').textContent = '❌';
+            statusEl.querySelector('.status-text').textContent = `Error: ${error.message}`;
+        }
+
+        btn.disabled = false;
+        btnText.style.display = 'block';
+        spinner.style.display = 'none';
+    }
+
+    selectOnboardingTheme(theme) {
+        this.onboardingState.selectedTheme = theme;
+        
+        // Update UI
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        const selectedOption = document.querySelector(`[data-theme="${theme}"]`);
+        if (selectedOption) {
+            selectedOption.classList.add('selected');
+        }
+        
+        // Apply theme immediately for preview
+        this.setTheme(theme);
+        
+        // Update status
+        const statusEl = document.getElementById('theme-step-status');
+        statusEl.classList.remove('error');
+        statusEl.classList.add('completed');
+        statusEl.querySelector('.status-icon').textContent = '✅';
+        statusEl.querySelector('.status-text').textContent = 'Theme selected';
+        
+        // Enable next button
+        document.getElementById('onboarding-next-btn').disabled = false;
+    }
+
+    async skipOnboarding() {
+        try {
+            const result = await window.electronAPI.skipOnboarding();
+            if (result.success) {
+                console.log('[DEBUG] Onboarding skipped');
+                this.hideOnboarding();
+            }
+        } catch (error) {
+            console.error('Error skipping onboarding:', error);
+        }
+    }
+
+    async finishOnboarding() {
+        try {
+            // Save theme selection if one was made
+            if (this.onboardingState.selectedTheme) {
+                const newSettings = {
+                    ...this.settings,
+                    theme: this.onboardingState.selectedTheme
+                };
+                await window.electronAPI.saveSettings(newSettings);
+            }
+            
+            const result = await window.electronAPI.completeOnboarding();
+            if (result.success) {
+                console.log('[DEBUG] Onboarding completed');
+                this.hideOnboarding();
+                
+                // Show a welcome message if this was the first time
+                if (!this.onboardingState.completedSteps.complete) {
+                    setTimeout(() => {
+                        const statusDiv = document.getElementById('api-key-status');
+                        if (statusDiv) {
+                            this.showStatus(statusDiv, '🎉 Welcome to AutoCaption! You\'re ready to start generating captions.', 'success');
+                        }
+                    }, 500);
+                }
+            }
+        } catch (error) {
+            console.error('Error finishing onboarding:', error);
+        }
     }
 }
 

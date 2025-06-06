@@ -1,6 +1,56 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.3.0] - 2025-06-06
+
+### Added
+- **Comprehensive Onboarding System**: Complete first-time user experience with guided setup
+  - Multi-step onboarding modal with 4 key steps: Welcome, API Key Setup, Theme Selection, and Completion
+  - Feature introduction with visual explanations of app capabilities
+  - Interactive API key validation within onboarding flow
+  - Theme selection with live preview during setup
+  - Progress tracking with step indicators and navigation controls
+- **Version-Aware Onboarding**: Smart onboarding system that re-runs for app updates
+  - Tracks onboarding completion by app version
+  - Automatically shows onboarding when app version changes
+  - Marks previously completed steps as "done" during version upgrades
+  - Allows users to skip through familiar steps
+- **Enhanced UI State Management**: Improved application initialization and state handling
+  - Fixed API key loading race condition that caused incorrect UI state
+  - Added proper initialization sequence for UI components
+  - Better handling of async API key validation on app startup
+- **Onboarding Persistence**: Complete state management for onboarding progress
+  - Individual step completion tracking
+  - Theme selection persistence during onboarding
+  - Graceful handling of interrupted onboarding sessions
+
+### Enhanced
+- **Settings Schema**: Extended application settings to support onboarding state
+  - Added `onboardingCompleted`, `onboardingVersion`, and `onboardingSteps` tracking
+  - Backwards compatibility with existing user settings
+- **IPC Communication**: New inter-process communication handlers for onboarding
+  - `get-onboarding-status`: Determines if onboarding should be shown
+  - `complete-onboarding-step`: Tracks individual step completion
+  - `complete-onboarding`: Marks entire onboarding as finished
+  - `skip-onboarding`: Allows users to bypass the onboarding process
+- **User Experience**: Significantly improved first-time user experience
+  - Clear explanation of app features and capabilities
+  - Guided API key setup with real-time validation
+  - Visual theme selection with immediate preview
+  - Professional completion screen with next steps
+
+### Fixed
+- **API Key State Persistence**: Fixed issue where refreshing the application (Ctrl/Cmd+R) would incorrectly prompt for API key entry even when one was already configured
+  - Resolved race condition in API key loading during application refresh
+  - Improved state management to properly restore UI state after page reload
+
+### Technical
+- Enhanced `AutoCaptionApp` constructor with proper initialization order
+- Added comprehensive onboarding state management in frontend
+- Implemented `checkOnboardingStatus()` and `setupVersionUpdateOnboarding()` methods
+- Created responsive onboarding modal with mobile-friendly design
+- Added extensive CSS styling for onboarding components with hover effects and transitions
+
 ## [1.2.0] - 2025-06-06
 
 ### Added
