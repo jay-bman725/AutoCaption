@@ -107,10 +107,17 @@ jobs:
         with:
           path: combined-artifacts
 
+      - name: List artifact directory contents
+        run: find combined-artifacts
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.read-version.outputs.version }}
           name: v${{ needs.read-version.outputs.version }}
-          files: combined-artifacts/**/*.{deb,AppImage,exe,dmg}
+          files: |
+            combined-artifacts/linux-build/*.deb
+            combined-artifacts/linux-build/*.AppImage
+            combined-artifacts/windows-build/*.exe
+            combined-artifacts/macos-build/*.dmg
           token: ${{ secrets.GH_PAT }}
