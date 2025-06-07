@@ -1,6 +1,20 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.4.1] - 2025-06-06
+
+### Fixed
+- **Critical File Deletion Bug**: Fixed issue where original audio files under 25MB were being incorrectly deleted after transcription
+  - Problem: Cleanup logic was unconditionally deleting the `processedPath` after transcription, but for files under 25MB, `processedPath` pointed to the original file instead of a temporary processed file
+  - Solution: Added conditional cleanup that only deletes files when `wasCompressed` is true (indicating a temporary file was created)
+  - Impact: Original user files are now preserved when they don't require processing or compression
+  - Debug logging now correctly indicates when no cleanup is needed vs. when temporary files are cleaned up
+
+### Technical
+- Modified transcription cleanup logic in `main.js` to check `wasCompressed` flag before file deletion
+- Added proper logging to distinguish between temporary file cleanup and original file preservation
+- Enhanced debug messaging to provide clearer feedback about file processing and cleanup operations
+
 ## [1.4.0] - 2025-06-06
 
 ### Added

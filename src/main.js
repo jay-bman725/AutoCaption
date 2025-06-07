@@ -107,7 +107,7 @@ let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.4.0';
+const CURRENT_VERSION = '1.4.1';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
@@ -566,13 +566,17 @@ ipcMain.handle('transcribe-audio', async (event, filePath) => {
 
     logger.info('Transcription completed successfully');
 
-    // Clean up compressed file
-    try {
-      fs.unlinkSync(processedPath);
-      logger.debug('Cleaned up temporary processed file');
-    } catch (error) {
-      logger.warn('Error cleaning up compressed file:', error);
-      console.error('Error cleaning up compressed file:', error);
+    // Clean up temporary processed file (only if it was compressed/converted)
+    if (wasCompressed) {
+      try {
+        fs.unlinkSync(processedPath);
+        logger.debug('Cleaned up temporary processed file');
+      } catch (error) {
+        logger.warn('Error cleaning up temporary processed file:', error);
+        console.error('Error cleaning up temporary processed file:', error);
+      }
+    } else {
+      logger.debug('No cleanup needed - original file was used');
     }
 
     return { success: true, srt: transcription };
