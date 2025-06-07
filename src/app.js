@@ -337,7 +337,7 @@ class AutoCaptionApp {
         }
     }
 
-    async generateCaptions() {
+    async generateCaptions(useAggressiveCompression = false) {
         if (!this.currentFile) return;
 
         const btn = document.getElementById('generate-btn');
@@ -352,7 +352,7 @@ class AutoCaptionApp {
         this.showStatus(statusDiv, '🔄 Processing file and preparing for transcription...', 'loading');
 
         try {
-            const result = await window.electronAPI.transcribeAudio(this.currentFile);
+            const result = await window.electronAPI.transcribeAudio(this.currentFile, useAggressiveCompression);
             
             if (result.success) {
                 this.currentSrt = result.srt;
@@ -360,9 +360,37 @@ class AutoCaptionApp {
                 document.getElementById('results-section').style.display = 'block';
                 document.getElementById('srt-content').textContent = this.currentSrt;
             } else {
-                // Check if it's a file size error for special handling
-                if (result.isFileSizeError) {
-                    this.showStatus(statusDiv, `🚫 ${result.error} Please select a shorter audio/video file and try again.`, 'error');
+                // Check if it's a file size error that can be compressed more
+                if (result.isFileSizeError && result.canCompressMore) {
+                    // Show dialog to user with options
+                    this.showStatus(statusDiv, '⏳ File too large. Showing options...', 'loading');
+                    
+                    try {
+                        const dialogResult = await window.electronAPI.showFileSizeDialog({
+                            originalSizeMB: result.originalSizeMB,
+                            currentSizeMB: result.currentSizeMB
+                        });
+                        
+                        if (dialogResult.cancelled) {
+                            this.showStatus(statusDiv, '❌ Transcription cancelled', 'error');
+                        } else if (dialogResult.action === 'compress') {
+                            // Try again with aggressive compression
+                            this.showStatus(statusDiv, '🔄 Retrying with heavy compression...', 'loading');
+                            return this.generateCaptions(true); // Recursive call with aggressive compression
+                        } else if (dialogResult.action === 'selectFile') {
+                            // Let user select a different file
+                            this.showStatus(statusDiv, '📁 Please select a different file', 'error');
+                            this.removeFile(); // Clear current file
+                        } else {
+                            this.showStatus(statusDiv, '❌ Transcription cancelled', 'error');
+                        }
+                    } catch (dialogError) {
+                        console.error('Error showing file size dialog:', dialogError);
+                        this.showStatus(statusDiv, '❌ Error showing options dialog', 'error');
+                    }
+                } else if (result.isFileSizeError) {
+                    // File is too large even after aggressive compression
+                    this.showStatus(statusDiv, `🚫 ${result.error}`, 'error');
                 } else {
                     this.showStatus(statusDiv, `❌ Error: ${result.error}`, 'error');
                 }

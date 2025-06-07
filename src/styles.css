@@ -195,6 +195,11 @@
     --divider-gradient: linear-gradient(90deg, transparent, #475569, transparent);
 }
 
+[data-theme="dark"] .settings-section {
+    background: transparent;
+    border-top: none;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -1885,4 +1890,93 @@ footer {
     .onboarding-actions {
         justify-content: center;
     }
+}
+
+/* Settings Section */
+.settings-section {
+    padding: 20px;
+    text-align: center;
+    background: transparent;
+    border-top: none;
+    margin-top: 0;
+    margin-bottom: 0;
+    position: relative;
+    bottom: 0;
+}
+
+.btn-settings {
+    background: var(--gradient-primary);
+    color: white;
+    padding: 16px 40px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-settings::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-settings:hover {
+    transform: translateY(-2px);
+    box-shadow: none;
+    background: var(--gradient-primary-hover);
+}
+
+.btn-settings:hover::before {
+    left: 100%;
+}
+
+.btn-settings:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 40px 20px 20px;
+    margin-top: auto;
+}
+
+.footer-content {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+.footer-content p {
+    font-size: 18px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.footer-links {
+    font-size: 15px;
+    opacity: 0.85;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.footer-links span {
+    white-space: nowrap;
 }

@@ -1,6 +1,62 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.5.0] - 2025-06-07
+
+### Added
+- **Enhanced File Size Handling**: Advanced file size management system for files over 25MB
+  - Native dialog with three user options when files exceed size limit after initial compression:
+    - "Try Heavy Compression" - Uses aggressive compression (64kbps, mono, 16kHz) with quality reduction warning
+    - "Choose Different File" - Returns to file selection dialog
+    - "Cancel" - Cancels the transcription process
+  - Recursive compression attempts with user choice at each step
+  - Detailed file size reporting showing original size, compressed size, and compression results
+  - Enhanced status messages with compression progress feedback
+
+- **Application Menu Enhancement**: Added reload functionality for improved user experience
+  - New "Reload" menu item in application menu
+  - Keyboard shortcuts: Command+R (macOS) and Ctrl+R (Windows/Linux)
+  - Integrated into existing streamlined menu structure
+
+- **UI Layout Improvements**: Relocated settings button for better user interface design
+  - Moved settings button from top-right header position to bottom of interface
+  - Wide-styled button design for improved accessibility and visual prominence
+  - Positioned after footer for logical UI flow
+
+### Enhanced
+- **Audio Processing Pipeline**: Improved compression system with multiple quality levels
+  - Standard compression (128kbps, stereo, 44.1kHz) for initial size reduction
+  - Aggressive compression option (64kbps, mono, 16kHz) for maximum file size reduction
+  - Smart compression parameter passing throughout the audio processing chain
+  - Enhanced error handling with detailed compression status reporting
+
+- **User Experience**: Streamlined file size management workflow
+  - Clear user choice dialogs instead of hard failures for oversized files
+  - Informative status messages throughout compression process
+  - Better error messaging with actionable options
+  - Preserved original file safety during compression attempts
+
+- **IPC Communication**: Extended inter-process communication for new features
+  - New 'show-file-size-dialog' handler for native dialog display
+  - Enhanced 'transcribe-audio' handler with aggressive compression parameter support
+  - Improved error response structure with detailed compression metadata
+
+### Technical
+- **File Processing**: Enhanced `convertToCompressedAudio()` function with `useAggressiveCompression` parameter
+- **Error Handling**: Modified `processAudioFile()` to return comprehensive error information including compression options
+- **Dialog System**: Implemented native dialog for file size management using Electron's dialog API
+- **CSS Enhancements**: Added comprehensive styling for relocated settings button
+  - New `.btn-settings` and `.settings-section` classes
+  - Gradient background with hover effects
+  - Dark theme compatibility
+  - Removed all shadow effects as per design requirements
+- **Menu System**: Enhanced `createApplicationMenu()` with reload functionality and proper keyboard shortcuts
+
+### Fixed
+- **File Size Error Handling**: Replaced hard failures with user-friendly choice dialogs when files exceed 25MB after compression
+- **Settings Button Positioning**: Corrected initial positioning issue where button appeared above footer instead of after footer
+- **UI Responsiveness**: Improved layout flow with properly positioned settings section
+
 ## [1.4.3] - 2025-06-07
 
 ### Added

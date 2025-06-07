@@ -5,9 +5,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getApiKeyStatus: () => ipcRenderer.invoke('get-api-key-status'),
   removeApiKey: () => ipcRenderer.invoke('remove-api-key'),
   selectAudioFile: () => ipcRenderer.invoke('select-audio-file'),
-  transcribeAudio: (filePath) => ipcRenderer.invoke('transcribe-audio', filePath),
+  transcribeAudio: (filePath, useAggressiveCompression) => ipcRenderer.invoke('transcribe-audio', filePath, useAggressiveCompression),
   saveSrtFile: (srtContent) => ipcRenderer.invoke('save-srt-file', srtContent),
   openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url),
+  showFileSizeDialog: (dialogData) => ipcRenderer.invoke('show-file-size-dialog', dialogData),
   
   // Settings management
   getSettings: () => ipcRenderer.invoke('get-settings'),

@@ -107,7 +107,7 @@ let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.4.3';
+const CURRENT_VERSION = '1.5.0';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
@@ -180,9 +180,9 @@ function initializeOpenAI(apiKey) {
 }
 
 // Convert video to audio or compress large audio files using FFmpeg
-async function convertToCompressedAudio(inputPath) {
+async function convertToCompressedAudio(inputPath, useAggressiveCompression = false) {
   return new Promise((resolve, reject) => {
-    logger.debug('Starting FFmpeg conversion/compression for:', inputPath);
+    logger.debug('Starting FFmpeg conversion/compression for:', inputPath, 'aggressive:', useAggressiveCompression);
     const tempDir = path.join(app.getPath('temp'), 'autocaption');
     const outputPath = path.join(tempDir, `processed_${Date.now()}.mp3`);
     
@@ -193,15 +193,15 @@ async function convertToCompressedAudio(inputPath) {
     const isVideo = ['mp4', 'avi', 'mov', 'mkv', 'flv', 'webm'].includes(fileExtension);
     const originalSizeMB = getFileSizeMB(inputPath);
     
-    logger.info(`Converting ${isVideo ? 'video' : 'audio'} file: ${originalSizeMB.toFixed(2)}MB`);
+    logger.info(`Converting ${isVideo ? 'video' : 'audio'} file: ${originalSizeMB.toFixed(2)}MB, aggressive: ${useAggressiveCompression}`);
     
     // Send progress update
     if (mainWindow) {
       let message;
       if (isVideo) {
-        message = '🔄 Converting video to MP3 audio...';
+        message = useAggressiveCompression ? '🔄 Converting video with heavy compression...' : '🔄 Converting video to MP3 audio...';
       } else {
-        message = `🔄 Compressing large audio file (${originalSizeMB.toFixed(2)} MB)...`;
+        message = useAggressiveCompression ? `🔄 Applying heavy compression (${originalSizeMB.toFixed(2)} MB)...` : `🔄 Compressing large audio file (${originalSizeMB.toFixed(2)} MB)...`;
       }
       mainWindow.webContents.send('transcription-status', { message });
     }
@@ -210,8 +210,14 @@ async function convertToCompressedAudio(inputPath) {
       .toFormat('mp3')
       .audioCodec('libmp3lame');
     
-    // For large files or videos, apply compression settings
-    if (isVideo || originalSizeMB > 25) {
+    if (useAggressiveCompression) {
+      // Heavy compression settings - may reduce quality significantly
+      ffmpegCommand = ffmpegCommand
+        .audioBitrate(64) // Very low bitrate
+        .audioChannels(1) // Mono
+        .audioFrequency(16000); // Lower sample rate
+    } else if (isVideo || originalSizeMB > 25) {
+      // Standard compression settings
       ffmpegCommand = ffmpegCommand
         .audioBitrate(128) // Compress to 128kbps
         .audioChannels(1) // Mono to reduce file size
@@ -230,9 +236,9 @@ async function convertToCompressedAudio(inputPath) {
           const percent = Math.round(progress.percent);
           let message;
           if (isVideo) {
-            message = `🔄 Converting video... ${percent}%`;
+            message = useAggressiveCompression ? `🔄 Converting with heavy compression... ${percent}%` : `🔄 Converting video... ${percent}%`;
           } else {
-            message = `🔄 Compressing audio... ${percent}%`;
+            message = useAggressiveCompression ? `🔄 Heavy compression... ${percent}%` : `🔄 Compressing audio... ${percent}%`;
           }
           mainWindow.webContents.send('transcription-status', { message });
         }
@@ -240,8 +246,9 @@ async function convertToCompressedAudio(inputPath) {
       .on('end', () => {
         if (mainWindow) {
           const action = isVideo ? 'conversion' : 'compression';
+          const compressionType = useAggressiveCompression ? 'heavy compression' : action;
           mainWindow.webContents.send('transcription-status', {
-            message: `✅ Audio ${action} completed. Checking file size...`
+            message: `✅ Audio ${compressionType} completed. Checking file size...`
           });
         }
         resolve(outputPath);
@@ -270,20 +277,20 @@ function getFileSizeMB(filePath) {
 }
 
 // Process audio file (check size first, compress only if needed)
-async function processAudioFile(filePath) {
+async function processAudioFile(filePath, useAggressiveCompression = false) {
   try {
-    logger.info('Processing audio file:', filePath);
+    logger.info('Processing audio file:', filePath, 'aggressive:', useAggressiveCompression);
     const originalSizeMB = getFileSizeMB(filePath);
     const isVideo = isVideoFile(filePath);
     
-    logger.debug(`File info: size=${originalSizeMB.toFixed(2)}MB, isVideo=${isVideo}`);
+    logger.debug(`File info: size=${originalSizeMB.toFixed(2)}MB, isVideo=${isVideo}, aggressive=${useAggressiveCompression}`);
     
     // If it's a video file, always convert to MP3
     // If it's an audio file and under 25MB, use original
     // If it's over 25MB, compress it
     if (isVideo || originalSizeMB > 25) {
-      logger.info(`File needs processing (size: ${originalSizeMB.toFixed(2)}MB, isVideo: ${isVideo})`);
-      const processedPath = await convertToCompressedAudio(filePath);
+      logger.info(`File needs processing (size: ${originalSizeMB.toFixed(2)}MB, isVideo: ${isVideo}, aggressive: ${useAggressiveCompression})`);
+      const processedPath = await convertToCompressedAudio(filePath, useAggressiveCompression);
       
       // Check file size after processing
       const fileSizeMB = getFileSizeMB(processedPath);
@@ -300,11 +307,28 @@ async function processAudioFile(filePath) {
         }
         
         const action = isVideo ? "conversion and compression" : "compression";
-        return {
-          success: false,
-          error: `After ${action}, file size is ${fileSizeMB.toFixed(2)} MB, which exceeds OpenAI's 25MB limit. Please use a shorter audio/video file.`,
-          isFileSizeError: true
-        };
+        
+        // If we haven't tried aggressive compression yet, offer that option
+        if (!useAggressiveCompression) {
+          return {
+            success: false,
+            error: `After ${action}, file size is ${fileSizeMB.toFixed(2)} MB, which exceeds OpenAI's 25MB limit.`,
+            isFileSizeError: true,
+            canCompressMore: true,
+            originalSizeMB: originalSizeMB.toFixed(2),
+            currentSizeMB: fileSizeMB.toFixed(2)
+          };
+        } else {
+          // Already tried aggressive compression, no more options
+          return {
+            success: false,
+            error: `Even after heavy compression, file size is ${fileSizeMB.toFixed(2)} MB, which exceeds OpenAI's 25MB limit. Please use a shorter audio/video file.`,
+            isFileSizeError: true,
+            canCompressMore: false,
+            originalSizeMB: originalSizeMB.toFixed(2),
+            currentSizeMB: fileSizeMB.toFixed(2)
+          };
+        }
       }
       
       logger.info(`File processed successfully: ${fileSizeMB.toFixed(2)}MB`);
@@ -463,6 +487,16 @@ function createApplicationMenu() {
           label: 'Quit',
           accelerator: process.platform === 'darwin' ? 'Command+Q' : 'Ctrl+Q',
           click: () => { app.quit(); }
+        },
+        {
+          label: 'Reload',
+          accelerator: process.platform === 'darwin' ? 'Command+R' : 'Ctrl+R',
+          click: () => {
+            logger.info('Reload menu item clicked');
+            if (mainWindow) {
+              mainWindow.reload();
+            }
+          }
         }
       ]
     }
@@ -583,16 +617,45 @@ ipcMain.handle('select-audio-file', async () => {
   return { success: false };
 });
 
-ipcMain.handle('transcribe-audio', async (event, filePath) => {
+// Show file size choice dialog
+ipcMain.handle('show-file-size-dialog', async (event, dialogData) => {
+  logger.info('Showing file size dialog');
+  
+  const options = {
+    type: 'question',
+    buttons: ['Try Heavy Compression', 'Choose Different File', 'Cancel'],
+    defaultId: 0,
+    title: 'File Too Large',
+    message: 'File size exceeds 25MB limit',
+    detail: `Original size: ${dialogData.originalSizeMB} MB\nAfter compression: ${dialogData.currentSizeMB} MB\n\nOptions:\n• Try heavy compression (may reduce audio quality)\n• Choose a different file\n• Cancel transcription`
+  };
+
+  const result = await dialog.showMessageBox(mainWindow, options);
+  
+  logger.debug('File size dialog result:', result.response);
+  
+  // Return the user's choice
+  switch (result.response) {
+    case 0: // Try Heavy Compression
+      return { action: 'compress', cancelled: false };
+    case 1: // Choose Different File
+      return { action: 'selectFile', cancelled: false };
+    case 2: // Cancel
+    default:
+      return { action: 'cancel', cancelled: true };
+  }
+});
+
+ipcMain.handle('transcribe-audio', async (event, filePath, useAggressiveCompression = false) => {
   if (!openai) {
     logger.error('Transcription attempted without API key set');
     return { success: false, error: 'API key not set' };
   }
 
   try {
-    logger.info('Starting transcription for file:', filePath);
+    logger.info('Starting transcription for file:', filePath, 'aggressive:', useAggressiveCompression);
     // Process the audio file (always compress, then check size)
-    const processResult = await processAudioFile(filePath);
+    const processResult = await processAudioFile(filePath, useAggressiveCompression);
     
     if (!processResult.success) {
       logger.error('Audio file processing failed:', processResult.error);
