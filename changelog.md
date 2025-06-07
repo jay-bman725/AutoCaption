@@ -1,6 +1,32 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.4.2] - 2025-01-07
+
+### Fixed
+- **Dark Theme Display Issues**: Resolved multiple areas where light/white sections appeared incorrectly in dark mode
+  - **File Info Background**: Fixed green gradient background that remained light in dark mode - now uses proper dark theme variant with subtle green tinting
+  - **SRT Preview Panel**: Corrected light gray background that didn't respect dark theme - now uses dark slate backgrounds
+  - **Update Modal Info**: Fixed blue info sections that stayed light - now uses dark theme compatible blue tinting
+  - **Changelog Headers**: Fixed purple gradient headers that ignored dark theme - now uses dark variants with proper contrast
+  - **Danger Buttons**: Corrected red buttons that used hardcoded colors - now uses theme-aware red variants with better dark mode visibility
+  - **Theme Preview Components**: Fixed preview elements that showed incorrect colors - now properly reflects actual theme appearance
+  - **Scrollbars**: Updated gradient scrollbars to be theme-aware instead of always light
+  - **Form Controls**: Fixed checkboxes and other controls that didn't properly theme
+
+### Enhanced
+- **CSS Variables System**: Extended existing theme system with 20+ new CSS custom properties for comprehensive dark theme coverage
+- **Color Consistency**: Replaced all remaining hardcoded color values with CSS variable references for complete theme integration
+- **Dark Theme Coverage**: Achieved 100% dark theme compatibility across all UI components and sections
+- **Theme Transitions**: Maintained smooth 0.3s transitions for all newly themed elements
+
+### Technical
+- Added new CSS variables for file info, SRT preview, update modal, changelog, and button components
+- Converted 13 hardcoded gradients to use CSS variable system
+- Extended both light and dark theme variable definitions with proper contrast ratios
+- Maintained backward compatibility with existing theme switching functionality
+- Enhanced theme preview accuracy to match actual application appearance
+
 ## [1.4.1] - 2025-06-06
 
 ### Fixed
