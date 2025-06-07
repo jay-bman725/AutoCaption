@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   setApiKey: (apiKey) => ipcRenderer.invoke('set-api-key', apiKey),
+  getApiKeyStatus: () => ipcRenderer.invoke('get-api-key-status'),
+  removeApiKey: () => ipcRenderer.invoke('remove-api-key'),
   selectAudioFile: () => ipcRenderer.invoke('select-audio-file'),
   transcribeAudio: (filePath) => ipcRenderer.invoke('transcribe-audio', filePath),
   saveSrtFile: (srtContent) => ipcRenderer.invoke('save-srt-file', srtContent),

@@ -134,6 +134,10 @@ class AutoCaptionApp {
         document.getElementById('manual-check-updates-btn').addEventListener('click', () => this.checkForUpdates());
         document.getElementById('show-debug-logs-btn').addEventListener('click', () => this.openDebugLogs());
 
+        // API Key Management in Settings
+        document.getElementById('settings-change-api-key-btn').addEventListener('click', () => this.changeApiKeyFromSettings());
+        document.getElementById('settings-remove-api-key-btn').addEventListener('click', () => this.removeApiKeyFromSettings());
+
         // Theme selection
         document.getElementById('theme-select').addEventListener('change', (e) => {
             this.setTheme(e.target.value);
@@ -454,6 +458,9 @@ class AutoCaptionApp {
         
         // Update last check info
         this.updateLastCheckInfo();
+        
+        // Check and update API key status
+        await this.updateApiKeyStatus();
     }
 
     closeSettings() {
@@ -1083,6 +1090,92 @@ class AutoCaptionApp {
             }
         } catch (error) {
             console.error('Error finishing onboarding:', error);
+        }
+    }
+
+    // API Key Management in Settings
+    async updateApiKeyStatus() {
+        const statusDisplay = document.getElementById('settings-api-key-status');
+        const indicator = document.getElementById('settings-api-key-indicator');
+        
+        try {
+            const result = await window.electronAPI.getApiKeyStatus();
+            if (result.success && result.hasApiKey) {
+                statusDisplay.classList.remove('not-configured');
+                statusDisplay.classList.add('configured');
+                indicator.textContent = '✅ API Key Configured';
+            } else {
+                statusDisplay.classList.remove('configured');
+                statusDisplay.classList.add('not-configured');
+                indicator.textContent = '❌ No API Key Set';
+            }
+        } catch (error) {
+            console.error('Error checking API key status:', error);
+            statusDisplay.classList.remove('configured');
+            statusDisplay.classList.add('not-configured');
+            indicator.textContent = '⚠️ Error checking status';
+        }
+    }
+
+    async changeApiKeyFromSettings() {
+        // Close settings modal
+        this.closeSettings();
+        
+        // Show the main API key section
+        this.showApiKeySection();
+        
+        // Focus on the input
+        document.getElementById('api-key-input').focus();
+    }
+
+    async removeApiKeyFromSettings() {
+        const button = document.getElementById('settings-remove-api-key-btn');
+        const originalText = button.innerHTML;
+        
+        // Show confirmation dialog
+        const confirmed = confirm('Are you sure you want to remove your API key? You will need to enter it again to use the application.');
+        
+        if (!confirmed) {
+            return;
+        }
+        
+        // Show loading state
+        button.innerHTML = '<span>🔄 Removing...</span>';
+        button.disabled = true;
+        
+        try {
+            const result = await window.electronAPI.removeApiKey();
+            if (result.success) {
+                // Update API key status
+                this.apiKeySet = false;
+                await this.updateApiKeyStatus();
+                
+                // Show success message briefly
+                button.innerHTML = '<span>✅ Removed</span>';
+                
+                // Reset UI to show API key section
+                setTimeout(() => {
+                    this.closeSettings();
+                    this.showApiKeySection();
+                    
+                    // Show status message
+                    const statusDiv = document.getElementById('api-key-status');
+                    this.showStatus(statusDiv, '🗑️ API key removed. Please enter a new one to continue.', 'error');
+                }, 1000);
+            } else {
+                button.innerHTML = '<span>❌ Failed</span>';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 2000);
+            }
+        } catch (error) {
+            console.error('Error removing API key:', error);
+            button.innerHTML = '<span>❌ Error</span>';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
         }
     }
 }

@@ -107,7 +107,7 @@ let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.3.0';
+const CURRENT_VERSION = '1.4.0';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
@@ -472,6 +472,40 @@ ipcMain.handle('set-api-key', async (event, apiKey) => {
     return { success: true };
   } catch (error) {
     logger.error('API key validation failed:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Get API key status
+ipcMain.handle('get-api-key-status', async () => {
+  try {
+    const apiKey = await loadApiKey();
+    return { 
+      success: true, 
+      hasApiKey: apiKey !== null && apiKey !== undefined && apiKey.trim().length > 0 
+    };
+  } catch (error) {
+    logger.error('Error checking API key status:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Remove API key
+ipcMain.handle('remove-api-key', async () => {
+  try {
+    logger.info('Removing API key');
+    // Remove the API key file
+    if (fs.existsSync(apiKeyFile)) {
+      await fsPromises.unlink(apiKeyFile);
+      logger.info('API key file removed successfully');
+    }
+    
+    // Clear the OpenAI instance
+    openai = null;
+    
+    return { success: true };
+  } catch (error) {
+    logger.error('Error removing API key:', error);
     return { success: false, error: error.message };
   }
 });

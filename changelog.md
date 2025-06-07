@@ -1,6 +1,39 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.4.0] - 2025-06-06
+
+### Added
+- **API Key Management in Settings**: Complete API key management functionality within the settings modal
+  - Current API key status display showing whether an API key is configured
+  - Change API Key button that redirects to the main API key input section
+  - Remove API Key button with confirmation dialog for secure key removal
+  - Real-time status updates when API key state changes
+- **Enhanced Settings Modal**: Expanded settings with dedicated API Key Management section
+  - Visual status indicators (✅ configured, ❌ not configured, 🔄 checking)
+  - Responsive button layout for API key actions
+  - Professional styling with danger button for removal action
+- **Backend API Key Operations**: New IPC handlers for comprehensive API key management
+  - `get-api-key-status`: Check if API key exists without exposing the actual key
+  - `remove-api-key`: Securely delete API key file and clear OpenAI instance
+  - Enhanced error handling and logging for all API key operations
+
+### Enhanced
+- **User Experience**: Streamlined API key management workflow
+  - Users can now manage their API key entirely from the settings without navigating away
+  - Clear visual feedback for all API key operations
+  - Confirmation dialogs prevent accidental key removal
+- **Security**: Improved API key handling
+  - API key status checking without exposing sensitive data
+  - Secure removal process that clears both file storage and memory
+  - Better separation of concerns between status checking and key access
+
+### Technical
+- Added `updateApiKeyStatus()`, `changeApiKeyFromSettings()`, and `removeApiKeyFromSettings()` methods
+- Extended preload.js with `getApiKeyStatus` and `removeApiKey` functions
+- Enhanced main.js with secure API key management IPC handlers
+- Improved error handling and user feedback throughout the API key lifecycle
+
 ## [1.3.0] - 2025-06-06
 
 ### Added
