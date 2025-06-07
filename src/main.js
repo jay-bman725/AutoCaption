@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
@@ -107,7 +107,7 @@ let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.4.2';
+const CURRENT_VERSION = '1.4.3';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
@@ -421,8 +421,60 @@ async function createWindow() {
   }
 }
 
+// Create application menu
+function createApplicationMenu() {
+  logger.info('Creating application menu');
+  const template = [
+    {
+      label: 'AutoCaption',
+      submenu: [
+        {
+          label: 'Check for Updates',
+          click: async () => {
+            logger.info('Check for Updates menu item clicked');
+            if (mainWindow) {
+              try {
+                const result = await checkForUpdates();
+                if (result.success) {
+                  const changelogResult = await fetchChangelog();
+                  showUpdateDialog(result, true, changelogResult);
+                  // Update last check time
+                  const settings = await loadSettings();
+                  settings.lastUpdateCheck = Date.now();
+                  await saveSettings(settings);
+                }
+              } catch (error) {
+                logger.error('Error checking for updates:', error);
+              }
+            }
+          }
+        },
+        {
+          label: 'Settings',
+          click: () => {
+            logger.info('Settings menu item clicked');
+            if (mainWindow) {
+              mainWindow.webContents.send('open-settings');
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Quit',
+          accelerator: process.platform === 'darwin' ? 'Command+Q' : 'Ctrl+Q',
+          click: () => { app.quit(); }
+        }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
 app.whenReady().then(async () => {
   logger.info('AutoCaption application starting up', { version: CURRENT_VERSION });
+  createApplicationMenu();
   await createWindow();
 });
 

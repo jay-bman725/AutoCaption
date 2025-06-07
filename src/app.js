@@ -52,6 +52,14 @@ class AutoCaptionApp {
                 this.showUpdateDialog(updateData);
             });
         }
+        
+        // Listen for open settings command from menu
+        if (window.electronAPI && window.electronAPI.onOpenSettings) {
+            window.electronAPI.onOpenSettings(() => {
+                console.log('Open settings command received from menu');
+                this.openSettings();
+            });
+        }
     }
 
     setupThemeSystem() {

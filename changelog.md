@@ -1,6 +1,17 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.4.3] - 2025-06-07
+
+### Added
+- **Simplified Custom Menu**: Implemented a streamlined application menu with essential functionality
+  - Reduced menu to only include the "AutoCaption" menu for a cleaner interface
+  - Focused menu items on core functionality: Check for Updates, Settings, and Quit
+  - Enhanced user experience with more minimal, task-focused menu structure
+
+### Technical
+- Implemented custom `createApplicationMenu()` function to define a streamlined menu structure
+
 ## [1.4.2] - 2025-01-07
 
 ### Fixed

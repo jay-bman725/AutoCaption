@@ -34,6 +34,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Listen for system theme changes
   onSystemThemeChanged: (callback) => ipcRenderer.on('system-theme-changed', callback),
   
+  // Listen for menu command to open settings
+  onOpenSettings: (callback) => ipcRenderer.on('open-settings', callback),
+  
   // Onboarding management
   getOnboardingStatus: () => ipcRenderer.invoke('get-onboarding-status'),
   completeOnboardingStep: (stepName) => ipcRenderer.invoke('complete-onboarding-step', stepName),
