@@ -1,6 +1,32 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.5.1] - 2025-01-02
+
+### Added
+- **Platform-Specific UI Optimization**: Enhanced interface for Windows and Linux users
+  - Implemented platform detection system to identify user's operating system
+  - Added conditional title bar visibility - title bar now hidden on Windows and Linux for cleaner interface
+  - Maintained macOS title bar visibility for platform consistency
+  - Dynamic container padding adjustment based on platform (52px for macOS, 20px for Windows/Linux)
+
+- **Modern Scrollbar System**: Replaced outdated Windows 7-era scrollbars with modern custom styling
+  - Implemented comprehensive CSS custom scrollbar system using webkit-scrollbar properties
+  - Added gradient scrollbar thumbs with smooth hover and active state transitions
+  - Cross-browser compatibility with Firefox scrollbar-width and scrollbar-color support
+  - Responsive scrollbar sizing (12px main, 8px thin variants)
+  - Enhanced smooth scrolling behavior throughout the application
+
+### Technical
+- **Platform Detection**: Added IPC communication between main and renderer processes
+  - New 'get-platform' IPC handler in main.js returning process.platform
+  - Extended preload.js electronAPI with getPlatform() method
+  - Implemented setupPlatformDetection() and handleTitleBarVisibility() in app.js
+- **CSS Architecture**: Enhanced styling system with new CSS variables for scrollbars
+  - Light and dark theme scrollbar color variables
+  - Targeted scrollbar application to specific elements (srt-preview, modal-content, etc.)
+  - Improved theme preview CSS variable system for better color management
+
 ## [1.5.0] - 2025-06-07
 
 ### Added

@@ -107,7 +107,7 @@ let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.5.0';
+const CURRENT_VERSION = '1.5.1';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
@@ -813,6 +813,19 @@ nativeTheme.on('updated', () => {
   if (mainWindow) {
     const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
     mainWindow.webContents.send('system-theme-changed', { theme });
+  }
+});
+
+// Platform detection
+ipcMain.handle('get-platform', async () => {
+  try {
+    return {
+      success: true,
+      platform: process.platform
+    };
+  } catch (error) {
+    logger.error('Error getting platform:', error);
+    return { success: false, error: error.message };
   }
 });
 

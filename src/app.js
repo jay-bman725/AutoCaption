@@ -15,6 +15,7 @@ class AutoCaptionApp {
         this.initializeEventListeners();
         this.setupApiKeyLoadListener();
         this.setupThemeSystem();
+        this.setupPlatformDetection();
         this.loadSettings();
         this.checkOnboardingStatus();
     }
@@ -75,6 +76,36 @@ class AutoCaptionApp {
 
         // Detect initial system theme
         this.detectAndApplyInitialTheme();
+    }
+
+    async setupPlatformDetection() {
+        try {
+            const result = await window.electronAPI.getPlatform();
+            if (result.success) {
+                console.log('[DEBUG] Platform detected:', result.platform);
+                this.handleTitleBarVisibility(result.platform);
+            }
+        } catch (error) {
+            console.error('Error detecting platform:', error);
+        }
+    }
+
+    handleTitleBarVisibility(platform) {
+        const titleBar = document.querySelector('.title-bar');
+        const container = document.querySelector('.container');
+        
+        // Show title bar only on macOS (darwin), hide on Windows (win32) and Linux
+        if (platform === 'darwin') {
+            console.log('[DEBUG] macOS detected - showing title bar');
+            titleBar.style.display = 'flex';
+            // Keep existing padding for macOS (title bar visible)
+            container.style.paddingTop = '52px';
+        } else {
+            console.log('[DEBUG] Non-macOS platform detected - hiding title bar');
+            titleBar.style.display = 'none';
+            // Reduce padding since title bar is hidden
+            container.style.paddingTop = '20px';
+        }
     }
 
     async detectAndApplyInitialTheme() {

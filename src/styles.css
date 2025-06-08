@@ -83,18 +83,22 @@
     --changelog-h2-bg: linear-gradient(135deg, #f0f4ff 0%, #ede9fe 100%);
     --btn-danger-color: #ef4444;
     --btn-danger-bg: transparent;
-    --btn-danger-hover-bg: #ef4444;
-    --theme-preview-light-bg: #ffffff;
+    --btn-danger-hover-bg: #ef4444;    --theme-preview-light-bg: #f8fafc;
     --theme-preview-dark-bg: #1a202c;
-    --theme-preview-sidebar-light: #f7fafc;
+    --theme-preview-sidebar-light: #e2e8f0;
     --theme-preview-sidebar-dark: #2d3748;
-    --theme-preview-line-light: #e2e8f0;
-    --theme-preview-line-dark: #4a5568;
-    --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --theme-preview-line-light: #cbd5e1;
+    --theme-preview-line-dark: #4a5568;--gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
     --gradient-primary-hover: linear-gradient(135deg, #5855eb, #7c3aed);
     --gradient-secondary: linear-gradient(135deg, var(--button-primary-bg) 0%, #8b5cf6 100%);
     --gradient-secondary-hover: linear-gradient(135deg, var(--button-primary-hover) 0%, #7c3aed 100%);
     --divider-gradient: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+    
+    /* Modern Scrollbar Colors */
+    --scrollbar-track-bg: rgba(241, 245, 249, 0.8);
+    --scrollbar-thumb-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --scrollbar-thumb-hover-bg: linear-gradient(135deg, #5855eb, #7c3aed);
+    --scrollbar-thumb-active-bg: linear-gradient(135deg, #4f46e5, #6d28d9);
 }
 
 [data-theme="dark"] {
@@ -181,18 +185,22 @@
     --changelog-h2-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.15) 100%);
     --btn-danger-color: #f87171;
     --btn-danger-bg: transparent;
-    --btn-danger-hover-bg: #ef4444;
-    --theme-preview-light-bg: #f1f5f9;
+    --btn-danger-hover-bg: #ef4444;    --theme-preview-light-bg: #f1f5f9;
     --theme-preview-dark-bg: #0f172a;
-    --theme-preview-sidebar-light: #e2e8f0;
+    --theme-preview-sidebar-light: #cbd5e1;
     --theme-preview-sidebar-dark: #1e293b;
-    --theme-preview-line-light: #cbd5e1;
-    --theme-preview-line-dark: #64748b;
-    --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --theme-preview-line-light: #94a3b8;
+    --theme-preview-line-dark: #64748b;--gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
     --gradient-primary-hover: linear-gradient(135deg, #5855eb, #7c3aed);
     --gradient-secondary: linear-gradient(135deg, var(--button-primary-bg) 0%, #8b5cf6 100%);
     --gradient-secondary-hover: linear-gradient(135deg, var(--button-primary-hover) 0%, #7c3aed 100%);
     --divider-gradient: linear-gradient(90deg, transparent, #475569, transparent);
+    
+    /* Modern Scrollbar Colors - Dark Theme */
+    --scrollbar-track-bg: rgba(30, 41, 59, 0.6);
+    --scrollbar-thumb-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --scrollbar-thumb-hover-bg: linear-gradient(135deg, #5855eb, #7c3aed);
+    --scrollbar-thumb-active-bg: linear-gradient(135deg, #4f46e5, #6d28d9);
 }
 
 [data-theme="dark"] .settings-section {
@@ -204,6 +212,10 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
@@ -697,18 +709,94 @@ input[type="password"]::placeholder {
     height: 24px;
 }
 
+/* Modern Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
 ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+    background: var(--scrollbar-track-bg);
+    border-radius: 8px;
+    margin: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--gradient-primary);
-    border-radius: 4px;
+    background: var(--scrollbar-thumb-bg);
+    border-radius: 8px;
+    border: 2px solid var(--scrollbar-track-bg);
+    transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--gradient-primary-hover);
+    background: var(--scrollbar-thumb-hover-bg);
+    border: 2px solid var(--scrollbar-track-bg);
+    transform: scale(1.05);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: var(--scrollbar-thumb-active-bg);
+}
+
+::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track-bg);
+}
+
+/* Thin scrollbars for smaller containers */
+.thin-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+    background: var(--scrollbar-track-bg);
+    border-radius: 6px;
+    margin: 2px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-bg);
+    border-radius: 6px;
+    border: 1px solid var(--scrollbar-track-bg);
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover-bg);
+}
+
+/* Apply thin scrollbars to specific elements */
+.srt-preview, .modal-content, .onboarding-step {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
+}
+
+.srt-preview::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar,
+.onboarding-step::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.srt-preview::-webkit-scrollbar-track,
+.modal-content::-webkit-scrollbar-track,
+.onboarding-step::-webkit-scrollbar-track {
+    background: var(--scrollbar-track-bg);
+    border-radius: 6px;
+    margin: 2px;
+}
+
+.srt-preview::-webkit-scrollbar-thumb,
+.modal-content::-webkit-scrollbar-thumb,
+.onboarding-step::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-bg);
+    border-radius: 6px;
+    border: 1px solid var(--scrollbar-track-bg);
+}
+
+.srt-preview::-webkit-scrollbar-thumb:hover,
+.modal-content::-webkit-scrollbar-thumb:hover,
+.onboarding-step::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover-bg);
 }
 
 /* Enhanced focus styles for accessibility */
@@ -1163,22 +1251,10 @@ footer {
     padding: 0;
 }
 
-.changelog-container::-webkit-scrollbar {
-    width: 8px;
-}
-
-.changelog-container::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
-}
-
-.changelog-container::-webkit-scrollbar-thumb {
-    background: var(--gradient-primary);
-    border-radius: 4px;
-}
-
-.changelog-container::-webkit-scrollbar-thumb:hover {
-    background: var(--gradient-primary-hover);
+/* Apply thin scrollbar to changelog container */
+.changelog-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
 }
 
 #changelog-content {
@@ -1650,7 +1726,7 @@ footer {
 
 .theme-preview-header {
     height: 20px;
-    background: #f5f5f5;
+    background: #e2e8f0;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -1658,11 +1734,11 @@ footer {
 }
 
 .theme-preview-header.light {
-    background: #f8f9fa;
+    background: #e2e8f0;
 }
 
 .theme-preview-header.dark {
-    background: #2d3748;
+    background: #374151;
 }
 
 .theme-preview-dot {
@@ -1675,7 +1751,7 @@ footer {
 .theme-preview-body {
     height: 60px;
     display: flex;
-    background: #ffffff;
+    background: #f1f5f9;
 }
 
 .theme-preview-body.light {

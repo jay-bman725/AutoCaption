@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Theme management
   getSystemTheme: () => ipcRenderer.invoke('get-system-theme'),
   
+  // Platform detection
+  getPlatform: () => ipcRenderer.invoke('get-platform'),
+  
   // Update checking
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   
