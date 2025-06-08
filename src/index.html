@@ -228,6 +228,21 @@
                 <h1>AutoCaption</h1>
                 <p>Generate professional captions for your videos.</p>
             </div>
+            
+            <!-- Connectivity Indicator -->
+            <div id="connectivity-indicator" class="connectivity-indicator" style="display: none;">
+                <div class="connectivity-content">
+                    <div class="connectivity-icon">🌐</div>
+                    <div class="connectivity-text">
+                        <h3>No Internet Connection</h3>
+                        <p>Please check your internet connection to use AutoCaption's AI transcription features.</p>
+                    </div>
+                    <button id="retry-connection-btn" class="btn btn-primary">
+                        <span id="retry-connection-text">🔄 Retry Connection</span>
+                        <div id="retry-connection-spinner" class="spinner" style="display: none;"></div>
+                    </button>
+                </div>
+            </div>
         </header>
 
         <main>
@@ -291,7 +306,7 @@
                         <div class="setting-group">
                             <h3>ℹ️ About</h3>
                             <div class="setting-item">
-                                <p><strong>Version:</strong> 1.5.1</p>
+                                <p><strong>Version:</strong> 1.5.2</p>
                                 <p><strong>Made with ❤️ by Jay</strong></p>
                                 <p>Using OpenAI Whisper for AI-powered transcription</p>
                             </div>

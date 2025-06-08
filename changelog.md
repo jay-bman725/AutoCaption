@@ -1,7 +1,40 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
-## [1.5.1] - 2025-01-02
+## [1.5.2] - 2025-06-07
+
+### Added
+- **Internet Connectivity Monitoring**: Comprehensive online/offline detection system to ensure proper app functionality
+  - Real-time connectivity checking with Google ping using 5-second timeout HTTPS requests
+  - Visual connectivity indicator that appears when offline with slide-down animation
+  - Smart retry system: automatic checks every 10 seconds when online, auto-retry every 30 seconds when offline
+  - Manual "Retry Connection" button with loading states for immediate connectivity testing
+  - Red banner notification system with clear "No Internet Connection" messaging
+- **Enhanced User Experience**: Proactive connectivity management for transcription reliability
+  - Prevents failed transcription attempts by ensuring internet availability upfront
+  - Real-time status updates through event-driven IPC communication
+  - Responsive UI feedback with smooth animations and hover effects
+  - App lifecycle integration - starts connectivity checking on launch, stops on quit
+
+### Technical
+- **Backend Connectivity System**: Added comprehensive internet checking infrastructure in main.js
+  - `checkInternetConnectivity()` function with Google ping and timeout handling
+  - `handleConnectivityChange()` for state management and renderer notifications
+  - `startConnectivityChecking()` and `startConnectivityRetryInterval()` for automated monitoring
+  - New IPC handlers: `retry-connectivity-check` and `get-connectivity-status`
+- **Frontend Integration**: Extended app.js with connectivity management
+  - `setupConnectivityManagement()` method for event handling and UI updates
+  - `handleConnectivityChange()` for dynamic indicator visibility control
+  - Manual retry functionality with loading state management
+- **UI Components**: Added connectivity indicator to index.html with professional styling
+  - Red gradient banner with Wi-Fi icon and retry button
+  - CSS animations and responsive design in styles.css
+  - Loading spinner for manual retry operations
+- **IPC Communication**: Enhanced preload.js with connectivity API exposure
+  - `retryConnectivityCheck` and `getConnectivityStatus` methods
+  - `onConnectivityStatus` event listener for real-time updates
+
+## [1.5.1] - 2025-06-07
 
 ### Added
 - **Platform-Specific UI Optimization**: Enhanced interface for Windows and Linux users

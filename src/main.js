@@ -6,6 +6,115 @@ const OpenAI = require('openai');
 const https = require('https');
 const ffmpeg = require('fluent-ffmpeg');
 
+// Internet connectivity checking
+let isOnline = true;
+let connectivityCheckInterval;
+let connectivityRetryInterval;
+const CONNECTIVITY_CHECK_INTERVAL = 10000; // 10 seconds
+const CONNECTIVITY_RETRY_INTERVAL = 30000; // 30 seconds when offline
+const CONNECTIVITY_TIMEOUT = 5000; // 5 seconds timeout
+
+// Check internet connectivity by trying to reach Google
+function checkInternetConnectivity() {
+  return new Promise((resolve) => {
+    const request = https.request({
+      hostname: 'google.com',
+      port: 443,
+      path: '/',
+      method: 'HEAD',
+      timeout: CONNECTIVITY_TIMEOUT
+    }, (res) => {
+      resolve(true);
+    });
+
+    request.on('error', () => {
+      resolve(false);
+    });
+
+    request.on('timeout', () => {
+      request.destroy();
+      resolve(false);
+    });
+
+    request.setTimeout(CONNECTIVITY_TIMEOUT);
+    request.end();
+  });
+}
+
+// Handle connectivity state changes
+async function handleConnectivityChange(online) {
+  const wasOnline = isOnline;
+  isOnline = online;
+
+  logger.info(`Connectivity status changed: ${online ? 'online' : 'offline'}`);
+
+  if (mainWindow) {
+    mainWindow.webContents.send('connectivity-status', { isOnline: online });
+  }
+
+  // If we just went offline, start more frequent retry checking
+  if (wasOnline && !online) {
+    logger.info('Device went offline, starting retry interval');
+    startConnectivityRetryInterval();
+  }
+  // If we just came back online, stop retry checking and resume normal checking
+  else if (!wasOnline && online) {
+    logger.info('Device came back online, stopping retry interval');
+    stopConnectivityRetryInterval();
+  }
+}
+
+// Start normal connectivity checking (every 10 seconds)
+function startConnectivityChecking() {
+  logger.info('Starting connectivity checking');
+  
+  // Initial check
+  checkInternetConnectivity().then(handleConnectivityChange);
+  
+  // Set up regular checking
+  connectivityCheckInterval = setInterval(async () => {
+    if (isOnline) { // Only do regular checks when we think we're online
+      const online = await checkInternetConnectivity();
+      if (online !== isOnline) {
+        await handleConnectivityChange(online);
+      }
+    }
+  }, CONNECTIVITY_CHECK_INTERVAL);
+}
+
+// Start aggressive retry checking (every 30 seconds when offline)
+function startConnectivityRetryInterval() {
+  if (connectivityRetryInterval) {
+    clearInterval(connectivityRetryInterval);
+  }
+  
+  connectivityRetryInterval = setInterval(async () => {
+    logger.debug('Retry connectivity check (offline state)');
+    const online = await checkInternetConnectivity();
+    if (online !== isOnline) {
+      await handleConnectivityChange(online);
+    }
+  }, CONNECTIVITY_RETRY_INTERVAL);
+}
+
+// Stop retry checking
+function stopConnectivityRetryInterval() {
+  if (connectivityRetryInterval) {
+    clearInterval(connectivityRetryInterval);
+    connectivityRetryInterval = null;
+  }
+}
+
+// Stop all connectivity checking
+function stopConnectivityChecking() {
+  logger.info('Stopping connectivity checking');
+  if (connectivityCheckInterval) {
+    clearInterval(connectivityCheckInterval);
+    connectivityCheckInterval = null;
+  }
+  stopConnectivityRetryInterval();
+}
+
 // Debug logging setup
 const debugLogsDir = path.join(app.getPath('userData'), 'logs');
 const debugLogFile = path.join(debugLogsDir, 'debug.log');
@@ -107,7 +216,7 @@ let openai;
 let updateCheckInterval;
 
 // Current app version
-const CURRENT_VERSION = '1.5.1';
+const CURRENT_VERSION = '1.5.2';
 const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
@@ -435,6 +544,9 @@ async function createWindow() {
     // Start automatic update checking
     await startAutoUpdateCheck();
     
+    // Start connectivity checking
+    startConnectivityChecking();
+    
     logger.info('Showing main window');
     mainWindow.show();
   });
@@ -515,6 +627,7 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', () => {
   logger.info('All windows closed');
   stopAutoUpdateCheck();
+  stopConnectivityChecking();
   if (process.platform !== 'darwin') {
     logger.info('Quitting application');
     app.quit();
@@ -825,6 +938,30 @@ ipcMain.handle('get-platform', async () => {
     };
   } catch (error) {
     logger.error('Error getting platform:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Connectivity management
+ipcMain.handle('retry-connectivity-check', async () => {
+  try {
+    logger.info('Manual connectivity retry requested');
+    const online = await checkInternetConnectivity();
+    if (online !== isOnline) {
+      await handleConnectivityChange(online);
+    }
+    return { success: true, isOnline: online };
+  } catch (error) {
+    logger.error('Error during manual connectivity retry:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-connectivity-status', async () => {
+  try {
+    return { success: true, isOnline };
+  } catch (error) {
+    logger.error('Error getting connectivity status:', error);
     return { success: false, error: error.message };
   }
 });

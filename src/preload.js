@@ -45,5 +45,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getOnboardingStatus: () => ipcRenderer.invoke('get-onboarding-status'),
   completeOnboardingStep: (stepName) => ipcRenderer.invoke('complete-onboarding-step', stepName),
   completeOnboarding: () => ipcRenderer.invoke('complete-onboarding'),
-  skipOnboarding: () => ipcRenderer.invoke('skip-onboarding')
+  skipOnboarding: () => ipcRenderer.invoke('skip-onboarding'),
+  
+  // Connectivity management
+  retryConnectivityCheck: () => ipcRenderer.invoke('retry-connectivity-check'),
+  getConnectivityStatus: () => ipcRenderer.invoke('get-connectivity-status'),
+  
+  // Listen for connectivity status changes
+  onConnectivityStatus: (callback) => ipcRenderer.on('connectivity-status', callback)
 });

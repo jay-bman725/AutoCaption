@@ -16,6 +16,7 @@ class AutoCaptionApp {
         this.setupApiKeyLoadListener();
         this.setupThemeSystem();
         this.setupPlatformDetection();
+        this.setupConnectivityManagement();
         this.loadSettings();
         this.checkOnboardingStatus();
     }
@@ -61,6 +62,14 @@ class AutoCaptionApp {
                 this.openSettings();
             });
         }
+        
+        // Listen for connectivity status changes
+        if (window.electronAPI && window.electronAPI.onConnectivityStatus) {
+            window.electronAPI.onConnectivityStatus((event, status) => {
+                console.log('[DEBUG] Connectivity status changed:', status.isOnline);
+                this.handleConnectivityChange(status.isOnline);
+            });
+        }
     }
 
     setupThemeSystem() {
@@ -87,6 +96,65 @@ class AutoCaptionApp {
             }
         } catch (error) {
             console.error('Error detecting platform:', error);
+        }
+    }
+
+    async setupConnectivityManagement() {
+        // Set up retry button
+        const retryBtn = document.getElementById('retry-connection-btn');
+        const retryText = document.getElementById('retry-connection-text');
+        const retrySpinner = document.getElementById('retry-connection-spinner');
+        
+        if (retryBtn) {
+            retryBtn.addEventListener('click', async () => {
+                console.log('[DEBUG] Manual connectivity retry requested');
+                
+                // Show loading state
+                retryText.style.display = 'none';
+                retrySpinner.style.display = 'inline-block';
+                retryBtn.disabled = true;
+                
+                try {
+                    const result = await window.electronAPI.retryConnectivityCheck();
+                    console.log('[DEBUG] Connectivity retry result:', result);
+                    
+                    if (result.success && result.isOnline) {
+                        // Connection restored, indicator will be hidden by connectivity change handler
+                        this.handleConnectivityChange(true);
+                    }
+                } catch (error) {
+                    console.error('Error during connectivity retry:', error);
+                } finally {
+                    // Reset button state
+                    retryText.style.display = 'inline';
+                    retrySpinner.style.display = 'none';
+                    retryBtn.disabled = false;
+                }
+            });
+        }
+        
+        // Check initial connectivity status
+        try {
+            const result = await window.electronAPI.getConnectivityStatus();
+            if (result.success) {
+                this.handleConnectivityChange(result.isOnline);
+            }
+        } catch (error) {
+            console.error('Error getting initial connectivity status:', error);
+        }
+    }
+
+    handleConnectivityChange(isOnline) {
+        const connectivityIndicator = document.getElementById('connectivity-indicator');
+        
+        if (isOnline) {
+            // Hide connectivity indicator when online
+            connectivityIndicator.style.display = 'none';
+            console.log('[DEBUG] Internet connection restored');
+        } else {
+            // Show connectivity indicator when offline
+            connectivityIndicator.style.display = 'block';
+            console.log('[DEBUG] Internet connection lost');
         }
     }
 

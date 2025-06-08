@@ -339,6 +339,77 @@ header p {
     transition: color 0.3s ease;
 }
 
+/* Connectivity Indicator */
+.connectivity-indicator {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px auto 0;
+    max-width: 600px;
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+    animation: slideDown 0.3s ease-out;
+}
+
+.connectivity-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: white;
+}
+
+.connectivity-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+.connectivity-text {
+    flex: 1;
+}
+
+.connectivity-text h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.connectivity-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.connectivity-indicator .btn {
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-weight: 500;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+}
+
+.connectivity-indicator .btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+.connectivity-indicator .btn:active {
+    transform: translateY(0);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 main {
     flex: 1;
     display: flex;
