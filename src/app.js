@@ -738,177 +738,28 @@ class AutoCaptionApp {
             console.log('[DEBUG] Theme defaulted to: system (error loading settings)');
             this.setTheme('system');
         }
+        
+        // Load and display app version
+        await this.loadAppInfo();
     }
 
-    showUpdateDialog(updateData) {
-        const modal = document.getElementById('update-modal');
-        const currentVersionEl = document.getElementById('current-version');
-        const newVersionEl = document.getElementById('new-version');
-        const changelogContentEl = document.getElementById('changelog-content');
-
-        // Set version info
-        currentVersionEl.textContent = updateData.currentVersion;
-        newVersionEl.textContent = updateData.latestVersion;
-
-        // Set changelog content
-        if (updateData.changelog) {
-            changelogContentEl.innerHTML = this.markdownToHtml(updateData.changelog);
-        } else {
-            changelogContentEl.innerHTML = '<p><em>Changelog not available</em></p>';
-        }
-
-        // Show modal
-        modal.classList.add('show');
-        
-        // Adjust changelog container height dynamically
-        setTimeout(() => this.adjustChangelogHeight(), 100);
-    }
-
-    adjustChangelogHeight() {
-        const modal = document.getElementById('update-modal');
-        const modalContent = modal.querySelector('.update-modal-content');
-        const changelogContainer = document.getElementById('changelog-container');
-        
-        if (!modalContent || !changelogContainer) return;
-
-        // Get viewport height
-        const viewportHeight = window.innerHeight;
-        
-        // Get modal content current height
-        const modalRect = modalContent.getBoundingClientRect();
-        
-        // Get header and footer heights
-        const header = modalContent.querySelector('.modal-header');
-        const footer = modalContent.querySelector('.modal-footer');
-        const updateInfo = modalContent.querySelector('.update-info');
-        const changelogHeader = modalContent.querySelector('.changelog-section h3');
-        
-        const headerHeight = header ? header.offsetHeight : 0;
-        const footerHeight = footer ? footer.offsetHeight : 0;
-        const updateInfoHeight = updateInfo ? updateInfo.offsetHeight : 0;
-        const changelogHeaderHeight = changelogHeader ? changelogHeader.offsetHeight : 0;
-        
-        // Calculate margins and padding (approximate)
-        const modalPadding = 40; // Modal padding
-        const bodyPadding = 40; // Modal body padding
-        const margins = 80; // Various margins and spacing
-        
-        // Calculate maximum available height for changelog
-        const maxModalHeight = viewportHeight * 0.85; // 85vh
-        const fixedElementsHeight = headerHeight + footerHeight + updateInfoHeight + changelogHeaderHeight + modalPadding + bodyPadding + margins;
-        
-        let maxChangelogHeight = maxModalHeight - fixedElementsHeight;
-        
-        // Set minimum and maximum constraints
-        const minHeight = window.innerWidth <= 768 ? 120 : 150; // Mobile vs desktop
-        const absoluteMaxHeight = window.innerWidth <= 768 ? 300 : 500;
-        
-        maxChangelogHeight = Math.max(minHeight, Math.min(maxChangelogHeight, absoluteMaxHeight));
-        
-        // Apply the calculated height
-        changelogContainer.style.maxHeight = `${maxChangelogHeight}px`;
-        changelogContainer.style.height = `${maxChangelogHeight}px`;
-    }
-
-    closeUpdateDialog() {
-        const modal = document.getElementById('update-modal');
-        modal.classList.remove('show');
-    }
-
-    async downloadUpdate() {
+    async loadAppInfo() {
         try {
-            // Get the new version number from the modal
-            const newVersionEl = document.getElementById('new-version');
-            const newVersion = newVersionEl ? newVersionEl.textContent.trim() : null;
-            
-            // Construct URL with specific version tag
-            const url = newVersion 
-                ? `https://github.com/jay-bman725/AutoCaption/releases/tag/v${newVersion}`
-                : 'https://github.com/jay-bman725/AutoCaption/releases'; // Fallback to general releases
-                
-            await window.electronAPI.openExternalUrl(url);
-            this.closeUpdateDialog();
-        } catch (error) {
-            console.error('Error opening releases page:', error);
-        }
-    }
-
-    markdownToHtml(markdown) {
-        // Simple markdown to HTML converter specifically for changelog
-        let html = markdown;
-
-        // Convert headers
-        html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-        html = html.replace(/^## \[(.*?)\] - (.*$)/gm, '<h2>$1 - $2</h2>'); // Version headers
-        html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-
-        // Convert bold
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-        // Convert italic
-        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-        // Convert inline code
-        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-        // Convert horizontal rules
-        html = html.replace(/^---$/gm, '<hr>');
-
-        // Convert lists - handle nested lists
-        const lines = html.split('\n');
-        let inList = false;
-        let processedLines = [];
-        
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const trimmedLine = line.trim();
-            
-            // Check if this is a list item
-            if (trimmedLine.match(/^- /)) {
-                if (!inList) {
-                    processedLines.push('<ul>');
-                    inList = true;
+            const result = await window.electronAPI.getAppInfo();
+            if (result.success) {
+                // Update version display in settings
+                const versionElement = document.getElementById('app-version');
+                if (versionElement) {
+                    versionElement.textContent = result.version;
                 }
-                processedLines.push(`<li>${trimmedLine.substring(2)}</li>`);
             } else {
-                // Close list if we were in one
-                if (inList) {
-                    processedLines.push('</ul>');
-                    inList = false;
-                }
-                
-                // Handle other content
-                if (trimmedLine === '') {
-                    processedLines.push('<br>');
-                } else if (!trimmedLine.match(/^<[h1-6]|^<hr/)) {
-                    if (!trimmedLine.match(/^<.*>.*<\/.*>$/)) {
-                        processedLines.push(`<p>${trimmedLine}</p>`);
-                    } else {
-                        processedLines.push(line);
-                    }
-                } else {
-                    processedLines.push(line);
-                }
+                console.error('Failed to load app info:', result.error);
             }
+        } catch (error) {
+            console.error('Error loading app info:', error);
         }
-        
-        // Close list if still open
-        if (inList) {
-            processedLines.push('</ul>');
-        }
-
-        html = processedLines.join('\n');
-
-        // Clean up extra breaks and empty paragraphs
-        html = html.replace(/<p><\/p>/g, '');
-        html = html.replace(/(<br>\s*){2,}/g, '<br>');
-        html = html.replace(/<br>\s*<h/g, '<h'); // Remove breaks before headers
-        html = html.replace(/<\/h[1-6]>\s*<br>/g, (match) => match.replace('<br>', '')); // Remove breaks after headers
-
-        return html;
     }
 
-    // Onboarding Methods
     async checkOnboardingStatus() {
         try {
             const result = await window.electronAPI.getOnboardingStatus();
@@ -1311,7 +1162,174 @@ class AutoCaptionApp {
                 button.innerHTML = originalText;
                 button.disabled = false;
             }, 2000);
+        }    }
+
+    showUpdateDialog(updateData) {
+        const modal = document.getElementById('update-modal');
+        const currentVersionEl = document.getElementById('current-version');
+        const newVersionEl = document.getElementById('new-version');
+        const changelogContentEl = document.getElementById('changelog-content');
+
+        // Set version info
+        currentVersionEl.textContent = updateData.currentVersion;
+        newVersionEl.textContent = updateData.latestVersion;
+
+        // Set changelog content
+        if (updateData.changelog) {
+            changelogContentEl.innerHTML = this.markdownToHtml(updateData.changelog);
+        } else {
+            changelogContentEl.innerHTML = '<p><em>Changelog not available</em></p>';
         }
+
+        // Show modal
+        modal.classList.add('show');
+        
+        // Adjust changelog container height dynamically
+        setTimeout(() => this.adjustChangelogHeight(), 100);
+    }
+
+    adjustChangelogHeight() {
+        const modal = document.getElementById('update-modal');
+        const modalContent = modal.querySelector('.update-modal-content');
+        const changelogContainer = document.getElementById('changelog-container');
+        
+        if (!modalContent || !changelogContainer) return;
+
+        // Get viewport height
+        const viewportHeight = window.innerHeight;
+        
+        // Get modal content current height
+        const modalRect = modalContent.getBoundingClientRect();
+        
+        // Get header and footer heights
+        const header = modalContent.querySelector('.modal-header');
+        const footer = modalContent.querySelector('.modal-footer');
+        const updateInfo = modalContent.querySelector('.update-info');
+        const changelogHeader = modalContent.querySelector('.changelog-section h3');
+        
+        const headerHeight = header ? header.offsetHeight : 0;
+        const footerHeight = footer ? footer.offsetHeight : 0;
+        const updateInfoHeight = updateInfo ? updateInfo.offsetHeight : 0;
+        const changelogHeaderHeight = changelogHeader ? changelogHeader.offsetHeight : 0;
+        
+        // Calculate margins and padding (approximate)
+        const modalPadding = 40; // Modal padding
+        const bodyPadding = 40; // Modal body padding
+        const margins = 80; // Various margins and spacing
+        
+        // Calculate maximum available height for changelog
+        const maxModalHeight = viewportHeight * 0.85; // 85vh
+        const fixedElementsHeight = headerHeight + footerHeight + updateInfoHeight + changelogHeaderHeight + modalPadding + bodyPadding + margins;
+        
+        let maxChangelogHeight = maxModalHeight - fixedElementsHeight;
+        
+        // Set minimum and maximum constraints
+        const minHeight = window.innerWidth <= 768 ? 120 : 150; // Mobile vs desktop
+        const absoluteMaxHeight = window.innerWidth <= 768 ? 300 : 500;
+        
+        maxChangelogHeight = Math.max(minHeight, Math.min(maxChangelogHeight, absoluteMaxHeight));
+        
+        // Apply the calculated height
+        changelogContainer.style.maxHeight = `${maxChangelogHeight}px`;
+        changelogContainer.style.height = `${maxChangelogHeight}px`;
+    }
+
+    closeUpdateDialog() {
+        const modal = document.getElementById('update-modal');
+        modal.classList.remove('show');
+    }
+
+    async downloadUpdate() {
+        try {
+            // Get the new version number from the modal
+            const newVersionEl = document.getElementById('new-version');
+            const newVersion = newVersionEl ? newVersionEl.textContent.trim() : null;
+            
+            // Construct URL with specific version tag
+            const url = newVersion 
+                ? `https://github.com/jay-bman725/AutoCaption/releases/tag/v${newVersion}`
+                : 'https://github.com/jay-bman725/AutoCaption/releases'; // Fallback to general releases
+                
+            await window.electronAPI.openExternalUrl(url);
+            this.closeUpdateDialog();
+        } catch (error) {
+            console.error('Error opening releases page:', error);
+        }
+    }
+
+    markdownToHtml(markdown) {
+        // Simple markdown to HTML converter specifically for changelog
+        let html = markdown;
+
+        // Convert headers
+        html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+        html = html.replace(/^## \[(.*?)\] - (.*$)/gm, '<h2>$1 - $2</h2>'); // Version headers
+        html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+
+        // Convert bold
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        // Convert italic
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // Convert inline code
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        // Convert horizontal rules
+        html = html.replace(/^---$/gm, '<hr>');
+
+        // Convert lists - handle nested lists
+        const lines = html.split('\n');
+        let inList = false;
+        let processedLines = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmedLine = line.trim();
+            
+            // Check if this is a list item
+            if (trimmedLine.match(/^- /)) {
+                if (!inList) {
+                    processedLines.push('<ul>');
+                    inList = true;
+                }
+                processedLines.push(`<li>${trimmedLine.substring(2)}</li>`);
+            } else {
+                // Close list if we were in one
+                if (inList) {
+                    processedLines.push('</ul>');
+                    inList = false;
+                }
+                
+                // Handle other content
+                if (trimmedLine === '') {
+                    processedLines.push('<br>');
+                } else if (!trimmedLine.match(/^<[h1-6]|^<hr/)) {
+                    if (!trimmedLine.match(/^<.*>.*<\/.*>$/)) {
+                        processedLines.push(`<p>${trimmedLine}</p>`);
+                    } else {
+                        processedLines.push(line);
+                    }
+                } else {
+                    processedLines.push(line);
+                }
+            }
+        }
+        
+        // Close list if still open
+        if (inList) {
+            processedLines.push('</ul>');
+        }
+
+        html = processedLines.join('\n');
+
+        // Clean up extra breaks and empty paragraphs
+        html = html.replace(/<p><\/p>/g, '');
+        html = html.replace(/(<br>\s*){2,}/g, '<br>');
+        html = html.replace(/<br>\s*<h/g, '<h'); // Remove breaks before headers
+        html = html.replace(/<\/h[1-6]>\s*<br>/g, (match) => match.replace('<br>', '')); // Remove breaks after headers
+
+        return html;
     }
 }
 

@@ -6,6 +6,10 @@ const OpenAI = require('openai');
 const https = require('https');
 const ffmpeg = require('fluent-ffmpeg');
 
+// Load version from package.json
+const packageJson = require('../package.json');
+const CURRENT_VERSION = packageJson.version;
+
 // Internet connectivity checking
 let isOnline = true;
 let connectivityCheckInterval;
@@ -14,7 +18,8 @@ const CONNECTIVITY_CHECK_INTERVAL = 10000; // 10 seconds
 const CONNECTIVITY_RETRY_INTERVAL = 30000; // 30 seconds when offline
 const CONNECTIVITY_TIMEOUT = 5000; // 5 seconds timeout
 
-// Check internet connectivity by trying to reach Google
+// Update check URL
+const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
 function checkInternetConnectivity() {
   return new Promise((resolve) => {
     const request = https.request({
@@ -215,9 +220,7 @@ let mainWindow;
 let openai;
 let updateCheckInterval;
 
-// Current app version
-const CURRENT_VERSION = '1.5.2';
-const UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/version';
+// Changelog URL
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/jay-bman725/AutoCaption/refs/heads/main/changelog.md';
 
 // Path for storing the API key and settings
@@ -611,6 +614,43 @@ function createApplicationMenu() {
           }
         }
       ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        {
+          label: 'Undo',
+          accelerator: process.platform === 'darwin' ? 'Command+Z' : 'Ctrl+Z',
+          role: 'undo'
+        },
+        {
+          label: 'Redo',
+          accelerator: process.platform === 'darwin' ? 'Command+Shift+Z' : 'Ctrl+Y',
+          role: 'redo'
+        },
+        { type: 'separator' },
+        {
+          label: 'Cut',
+          accelerator: process.platform === 'darwin' ? 'Command+X' : 'Ctrl+X',
+          role: 'cut'
+        },
+        {
+          label: 'Copy',
+          accelerator: process.platform === 'darwin' ? 'Command+C' : 'Ctrl+C',
+          role: 'copy'
+        },
+        {
+          label: 'Paste',
+          accelerator: process.platform === 'darwin' ? 'Command+V' : 'Ctrl+V',
+          role: 'paste'
+        },
+        { type: 'separator' },
+        {
+          label: 'Select All',
+          accelerator: process.platform === 'darwin' ? 'Command+A' : 'Ctrl+A',
+          role: 'selectall'
+        }
+      ]
     }
   ];
 
@@ -839,6 +879,17 @@ ipcMain.handle('save-srt-file', async (event, srtContent) => {
 });
 
 // Settings IPC handlers
+ipcMain.handle('get-app-info', async () => {
+  try {
+    return { 
+      success: true, 
+      version: CURRENT_VERSION 
+    };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('get-settings', async () => {
   try {
     const settings = await loadSettings();

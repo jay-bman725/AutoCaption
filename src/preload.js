@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
   
+  // App info
+  getAppInfo: () => ipcRenderer.invoke('get-app-info'),
+  
   // Theme management
   getSystemTheme: () => ipcRenderer.invoke('get-system-theme'),
   

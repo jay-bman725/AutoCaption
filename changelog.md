@@ -1,6 +1,30 @@
 # Changelog
 **All dates are in YYYY/MM/DD (Year-Month-Day)**
 
+## [1.5.3] - 2025-06-16
+
+### Added
+- **Edit Menu**: Added comprehensive Edit menu to the application menu bar with standard keyboard shortcuts
+  - Undo (Cmd+Z/Ctrl+Z) and Redo (Cmd+Shift+Z/Ctrl+Y) functionality
+  - Cut (Cmd+X/Ctrl+X), Copy (Cmd+C/Ctrl+C), and Paste (Cmd+V/Ctrl+V) operations
+  - Select All (Cmd+A/Ctrl+A) command
+  - Cross-platform compatibility with automatic keyboard shortcut adaptation
+  - Proper integration with system clipboard and text input fields
+
+### Changed
+- **Dynamic Version Management**: Completely overhauled version handling system for better maintainability
+  - Removed all hardcoded version strings throughout the codebase
+  - Version now automatically detected from package.json at runtime
+  - Added new IPC handler `get-app-info` for communicating version to renderer process
+  - Updated version display in settings to load dynamically instead of static HTML
+  - Ensures single source of truth for version information across the entire application
+
+### Technical Improvements
+- Enhanced preload.js with new `getAppInfo()` method for version communication
+- Modified app.js to include `loadAppInfo()` method for dynamic version loading
+- Updated HTML template to use dynamic version placeholder with loading state
+- Streamlined main.js by removing redundant hardcoded version constants
+
 ## [1.5.2] - 2025-06-07
 
 ### Added
